@@ -43,11 +43,11 @@ const OrderCard = ({ order, onAssign, onComplete }) => (
         {order.status !== 'Completed' && (
           <button onClick={() => onAssign(order)} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md">Assign / Change Garage</button>
         )}
-        {order.status !== 'Completed' ? (
+        {order.status === 'In Progress' ? (
           <button onClick={() => onComplete(order)} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md">Mark as Completed</button>
-        ) : (
+        ) : order.status === 'Completed' ? (
           <StatusBadge status="Completed" />
-        )}
+        ) : null}
       </div>
     </div>
   </div>

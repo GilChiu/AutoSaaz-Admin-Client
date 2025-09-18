@@ -58,6 +58,8 @@ const Modal = ({ open, onClose, onConfirm }) => {
 const ContentServiceSettingsPage = () => {
   const [rows, setRows] = useState(initialServices);
   const [open, setOpen] = useState(false);
+  // TODO: Replace with real-time garage name from backend once available
+  const [garageName] = useState('AAA Auto Garage');
 
   const onConfirm = (service, commission) => {
     if (!service || !commission) { setOpen(false); return; }
@@ -74,7 +76,7 @@ const ContentServiceSettingsPage = () => {
           <h2 className="text-lg font-semibold text-gray-800">Service Setting</h2>
           <div className="mt-4 bg-white border border-gray-200 rounded-lg">
             <div className="flex items-center justify-between p-4">
-              <div className="text-gray-800 font-semibold">Services Management</div>
+              <div className="text-gray-800 font-semibold">{garageName}</div>
               <button onClick={() => setOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-md">+ Add Commission</button>
             </div>
             <div className="overflow-x-auto">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Users, Building, Calendar, DollarSign, TrendingUp, Clock } from "lucide-react";
+import DirhamIcon from "../components/DirhamIcon";
 
 const DashboardPage = () => {
   const [stats] = useState({
@@ -16,6 +17,20 @@ const DashboardPage = () => {
     { id: 2, customer: "Jane Smith", garage: "Auto Care Center", service: "Brake Repair", amount: 280, status: "pending" },
     { id: 3, customer: "Mike Johnson", garage: "Super Service", service: "Tire Rotation", amount: 60, status: "in-progress" },
   ];
+
+  // Format numbers for display, without embedding currency so we can prepend a custom AED symbol icon.
+  const formatAED = (value) => {
+    try {
+      return new Intl.NumberFormat('en-AE', {
+        style: 'decimal',
+        maximumFractionDigits: 0,
+        minimumFractionDigits: 0,
+      }).format(value);
+    } catch (err) {
+      // Fallback to a simple prefix if Intl locale isn't available
+      return Number(value || 0).toLocaleString('en');
+    }
+  };
 
   const StatsCard = ({ title, value, icon: Icon, change, changeType }) => (
     <div className="bg-white rounded-lg shadow p-6">
@@ -86,7 +101,12 @@ const DashboardPage = () => {
         />
         <StatsCard
           title="Monthly Revenue"
-          value={`$${stats.revenue.toLocaleString()}`}
+          value={(
+            <span className="inline-flex items-center gap-1">
+              <DirhamIcon />
+              {formatAED(stats.revenue)}
+            </span>
+          )}
           icon={DollarSign}
           change={15.3}
           changeType="increase"
@@ -145,7 +165,10 @@ const DashboardPage = () => {
                       {order.service}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${order.amount}
+                      <span className="inline-flex items-center gap-1">
+                        <DirhamIcon />
+                        {formatAED(order.amount)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
