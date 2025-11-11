@@ -48,7 +48,7 @@ export const apiService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY,  // Supabase requires this for function access
         },
         body: JSON.stringify({
           email: credentials.email,
