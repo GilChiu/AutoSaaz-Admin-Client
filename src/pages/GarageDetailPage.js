@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const badgeClass = (status) => {
   if (status === 'Active' || status === 'active') return 'bg-green-100 text-green-700';
@@ -18,6 +19,17 @@ const GarageDetailPage = () => {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: () => {},
+    showInput: false,
+    inputValue: '',
+    inputPlaceholder: ''
+  });
 
   const fetchGarageDetail = useCallback(async () => {
     try {
@@ -41,26 +53,65 @@ const GarageDetailPage = () => {
     setOpen(false);
     if (!garage) return;
 
-    if (!window.confirm(`Are you sure you want to ${garage.isSuspended ? 'unsuspend' : 'suspend'} ${garage.name}?`)) {
-      return;
-    }
-
-    try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      const adminId = userData.id;
-
-      if (garage.isSuspended) {
-        await apiService.unsuspendGarage(garage.id, adminId);
-      } else {
-        const reason = prompt('Reason for suspension (optional):');
-        await apiService.suspendGarage(garage.id, reason || 'Suspended by admin', adminId);
-      }
-
-      // Refresh garage details
-      fetchGarageDetail();
-    } catch (err) {
-      console.error('Error suspending/unsuspending garage:', err);
-      alert(err.message || 'Failed to update garage status');
+    if (garage.isSuspended) {
+      // Unsuspend - no reason needed
+      setConfirmModal({
+        isOpen: true,
+        title: 'Unsuspend Garage',
+        message: `Are you sure you want to unsuspend ${garage.name}? This will restore the garage to active status.`,
+        type: 'warning',
+        showInput: false,
+        onConfirm: async () => {
+          try {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const adminId = userData.id;
+            await apiService.unsuspendGarage(garage.id, adminId);
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            fetchGarageDetail();
+          } catch (err) {
+            console.error('Error unsuspending garage:', err);
+            setConfirmModal({
+              isOpen: true,
+              title: 'Error',
+              message: err.message || 'Failed to unsuspend garage',
+              type: 'danger',
+              showInput: false,
+              onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false }))
+            });
+          }
+        }
+      });
+    } else {
+      // Suspend - reason required
+      setConfirmModal({
+        isOpen: true,
+        title: 'Suspend Garage',
+        message: `Are you sure you want to suspend ${garage.name}?`,
+        type: 'danger',
+        showInput: true,
+        inputPlaceholder: 'Enter suspension reason',
+        inputValue: '',
+        onConfirm: async () => {
+          try {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const adminId = userData.id;
+            const reason = confirmModal.inputValue || 'Suspended by admin';
+            await apiService.suspendGarage(garage.id, reason, adminId);
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            fetchGarageDetail();
+          } catch (err) {
+            console.error('Error suspending garage:', err);
+            setConfirmModal({
+              isOpen: true,
+              title: 'Error',
+              message: err.message || 'Failed to suspend garage',
+              type: 'danger',
+              showInput: false,
+              onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false }))
+            });
+          }
+        }
+      });
     }
   };
 
@@ -68,23 +119,32 @@ const GarageDetailPage = () => {
     setOpen(false);
     if (!garage) return;
 
-    if (!window.confirm(`Are you sure you want to DELETE ${garage.name}? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-      const adminId = userData.id;
-
-      await apiService.deleteGarage(garage.id, adminId);
-
-      // Navigate back to list
-      alert('Garage deleted successfully');
-      navigate('/garages');
-    } catch (err) {
-      console.error('Error deleting garage:', err);
-      alert(err.message || 'Failed to delete garage');
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Garage',
+      message: `Are you sure you want to DELETE ${garage.name}? This action cannot be undone.`,
+      type: 'danger',
+      showInput: false,
+      onConfirm: async () => {
+        try {
+          const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+          const adminId = userData.id;
+          await apiService.deleteGarage(garage.id, adminId);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          navigate('/garages');
+        } catch (err) {
+          console.error('Error deleting garage:', err);
+          setConfirmModal({
+            isOpen: true,
+            title: 'Error',
+            message: err.message || 'Failed to delete garage',
+            type: 'danger',
+            showInput: false,
+            onConfirm: () => setConfirmModal(prev => ({ ...prev, isOpen: false }))
+          });
+        }
+      }
+    });
   };
 
   useEffect(() => {
@@ -193,6 +253,13 @@ const GarageDetailPage = () => {
           )}
         </dl>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        {...confirmModal}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onInputChange={(value) => setConfirmModal(prev => ({ ...prev, inputValue: value }))}
+      />
     </div>
   );
 };
