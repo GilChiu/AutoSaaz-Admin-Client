@@ -31,16 +31,20 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await apiService.login(credentials);
-      const { user: userData, token } = response;
+      const { user: userData, profile, token } = response;
       
       localStorage.setItem("authToken", token);
       localStorage.setItem("userData", JSON.stringify(userData));
+      if (profile) {
+        localStorage.setItem("userProfile", JSON.stringify(profile));
+      }
       
       setUser(userData);
       setIsAuthenticated(true);
       
-      return { success: true };
+      return { success: true, user: userData, profile };
     } catch (error) {
+      console.error('Login failed:', error);
       return { success: false, error: error.message };
     }
   };

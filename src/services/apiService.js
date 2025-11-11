@@ -1,5 +1,7 @@
-// API Base URL - Update this to match your backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '../config/supabase';
+
+// API Base URL - Admin uses Supabase Functions
+const API_BASE_URL = process.env.REACT_APP_FUNCTIONS_URL || FUNCTIONS_URL;
 
 // Helper function to handle API requests
 const apiRequest = async (endpoint, options = {}) => {
@@ -13,8 +15,14 @@ const apiRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // For Supabase Functions: include anon key + x-access-token
+  if (API_BASE_URL.includes('.functions.supabase.co')) {
+    config.headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
+    if (token) {
+      config.headers['x-access-token'] = token;
+    }
+  } else if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
   }
 
   try {
@@ -35,19 +43,42 @@ const apiRequest = async (endpoint, options = {}) => {
 export const apiService = {
   // Authentication
   login: async (credentials) => {
-    // Mock login for development - replace with actual API call
-    if (credentials.email === 'admin@autosaaz.com' && credentials.password === 'admin123') {
-      return {
-        user: {
-          id: 1,
-          name: 'Admin User',
-          email: 'admin@autosaaz.com',
-          role: 'admin'
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        token: 'mock-jwt-token'
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Login failed');
+      }
+
+      // Store tokens
+      if (result.data) {
+        localStorage.setItem('authToken', result.data.accessToken);
+        localStorage.setItem('refreshToken', result.data.refreshToken);
+        localStorage.setItem('userData', JSON.stringify(result.data.user));
+        localStorage.setItem('userProfile', JSON.stringify(result.data.profile));
+      }
+
+      return {
+        user: result.data.user,
+        profile: result.data.profile,
+        token: result.data.accessToken,
       };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    throw new Error('Invalid credentials');
   },
 
   logout: async () => {
