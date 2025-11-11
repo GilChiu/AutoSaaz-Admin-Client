@@ -182,18 +182,6 @@ const GarageDetailPage = () => {
             <dt className="font-medium text-gray-600 col-span-1">Rating:</dt>
             <dd className="col-span-4 text-gray-800">{garage.rating || 0} ★</dd>
           </div>
-          {garage.companyLegalName && (
-            <div className="grid grid-cols-5 py-2">
-              <dt className="font-medium text-gray-600 col-span-1">Company:</dt>
-              <dd className="col-span-4 text-gray-800">{garage.companyLegalName}</dd>
-            </div>
-          )}
-          {garage.tradeLicenseNumber && (
-            <div className="grid grid-cols-5 py-2">
-              <dt className="font-medium text-gray-600 col-span-1">License:</dt>
-              <dd className="col-span-4 text-gray-800">{garage.tradeLicenseNumber}</dd>
-            </div>
-          )}
           {garage.isSuspended && (
             <div className="grid grid-cols-5 py-2 bg-red-50 -mx-6 px-6 py-3 mt-2">
               <dt className="font-medium text-red-600 col-span-1">Suspended:</dt>
@@ -205,31 +193,6 @@ const GarageDetailPage = () => {
           )}
         </dl>
       </div>
-
-      {/* Statistics */}
-      {garage.stats && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Statistics</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{garage.stats.totalBookings || 0}</div>
-              <div className="text-sm text-gray-600">Total Bookings</div>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{garage.stats.completedBookings || 0}</div>
-              <div className="text-sm text-gray-600">Completed</div>
-            </div>
-            <div className="bg-red-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{garage.stats.cancelledBookings || 0}</div>
-              <div className="text-sm text-gray-600">Cancelled</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">AED {garage.stats.totalRevenue || 0}</div>
-              <div className="text-sm text-gray-600">Total Revenue</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
