@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -15,11 +15,7 @@ const UserManagementPage = () => {
   
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchUsers();
-  }, [page]);
-
-  const fetchUsers = async (searchTerm = search) => {
+  const fetchUsers = useCallback(async (searchTerm = search) => {
     try {
       setLoading(true);
       setError('');
@@ -39,7 +35,11 @@ const UserManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleSearch = () => {
     setPage(1); // Reset to first page on search
