@@ -152,8 +152,111 @@ export const apiService = {
   },
 
   // Garages
-  getGarages: async () => {
-    return apiRequest('/garages');
+  getGarages: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '', includeDeleted = false } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    if (includeDeleted) queryParams.append('includeDeleted', 'true');
+    
+    const response = await fetch(`${API_BASE_URL}/garages?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch garages');
+    }
+    
+    return result;
+  },
+
+  getGarageDetail: async (garageId) => {
+    const response = await fetch(`${API_BASE_URL}/garage-detail/${garageId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch garage details');
+    }
+    
+    return result.data;
+  },
+
+  suspendGarage: async (garageId, reason = '', adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/garages`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        garageId,
+        action: 'suspend',
+        reason,
+        adminId
+      }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to suspend garage');
+    }
+    
+    return result;
+  },
+
+  unsuspendGarage: async (garageId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/garages`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        garageId,
+        action: 'unsuspend',
+        adminId
+      }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to unsuspend garage');
+    }
+    
+    return result;
+  },
+
+  deleteGarage: async (garageId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/garages?garageId=${garageId}&adminId=${adminId || ''}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to delete garage');
+    }
+    
+    return result;
   },
 
   createGarage: async (garageData) => {
@@ -167,12 +270,6 @@ export const apiService = {
     return apiRequest(`/garages/${garageId}`, {
       method: 'PUT',
       body: JSON.stringify(garageData)
-    });
-  },
-
-  deleteGarage: async (garageId) => {
-    return apiRequest(`/garages/${garageId}`, {
-      method: 'DELETE'
     });
   },
 

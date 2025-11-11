@@ -1,52 +1,107 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MoreVertical } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../services/apiService';
 
 const GarageManagementPage = () => {
-  const [garages] = useState([
-    {
-      id: 1,
-      name: "AAA Auto Garage",
-      owner: "Ahmed Raza",
-      contact: "+92 301 9876543",
-      area: "Gulberg",
-      rating: 4.5,
-      status: "Active"
-    },
-    {
-      id: 2,
-      name: "AAA Auto Garage",
-      owner: "Ahmed Raza",
-      contact: "+92 301 9876543",
-      area: "Gulberg",
-      rating: 4.5,
-      status: "Active"
-    },
-    {
-      id: 3,
-      name: "AAA Auto Garage",
-      owner: "Ahmed Raza",
-      contact: "+92 301 9876543",
-      area: "Gulberg",
-      rating: 4.5,
-      status: "Active"
-    },
-  ]);
-
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredGarages = garages.filter(garage => {
-    const term = searchTerm.toLowerCase();
-    return !term || garage.name.toLowerCase().includes(term);
-  });
-
-  // status displayed as plain text per design
-
-  // rating shown as number + star symbol to match design
+  const [garages, setGarages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(null);
   const menuRef = useRef(null);
+
+  const fetchGarages = useCallback(async (searchTerm = search) => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await apiService.getGarages({
+        page,
+        limit,
+        search: searchTerm,
+      });
+      
+      setGarages(result.data || []);
+      setTotal(result.meta?.total || 0);
+      setTotalPages(result.meta?.totalPages || 1);
+    } catch (err) {
+      console.error('Error fetching garages:', err);
+      setError(err.message || 'Failed to load garages');
+      setGarages([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, search]);
+
+  useEffect(() => {
+    fetchGarages();
+  }, [fetchGarages]);
+
+  const handleSearch = () => {
+    setPage(1);
+    fetchGarages();
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleSuspendGarage = async (garage, e) => {
+    e.stopPropagation();
+    setOpenMenu(null);
+    
+    if (!window.confirm(`Are you sure you want to ${garage.isSuspended ? 'unsuspend' : 'suspend'} ${garage.name}?`)) {
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = userData.id;
+
+      if (garage.isSuspended) {
+        await apiService.unsuspendGarage(garage.id, adminId);
+      } else {
+        const reason = prompt('Reason for suspension (optional):');
+        await apiService.suspendGarage(garage.id, reason || 'Suspended by admin', adminId);
+      }
+      
+      // Refresh the list
+      fetchGarages();
+    } catch (err) {
+      console.error('Error suspending/unsuspending garage:', err);
+      alert(err.message || 'Failed to update garage status');
+    }
+  };
+
+  const handleDeleteGarage = async (garage, e) => {
+    e.stopPropagation();
+    setOpenMenu(null);
+    
+    if (!window.confirm(`Are you sure you want to DELETE ${garage.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = userData.id;
+
+      await apiService.deleteGarage(garage.id, adminId);
+      
+      // Refresh the list
+      fetchGarages();
+    } catch (err) {
+      console.error('Error deleting garage:', err);
+      alert(err.message || 'Failed to delete garage');
+    }
+  };
 
   useEffect(() => {
     const handler = (e) => {
@@ -68,75 +123,147 @@ const GarageManagementPage = () => {
           type="text"
           placeholder="Search by garage name"
           className="w-full sm:w-[520px] px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyPress={handleKeyPress}
         />
-        <button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-2 rounded-md shadow-sm">Search</button>
+        <button 
+          onClick={handleSearch}
+          className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-2 rounded-md shadow-sm"
+        >
+          Search
+        </button>
       </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <span className="ml-3 text-gray-600">Loading garages...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && garages.length === 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+          <svg className="w-16 h-16 mb-4 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <p className="text-lg font-medium text-gray-900 mb-2">No garages found</p>
+          <p className="text-sm text-gray-500">
+            {search ? 'Try adjusting your search criteria' : 'Garages will appear here once they register'}
+          </p>
+        </div>
+      )}
 
       {/* Garages Table */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Garage Name</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Owner</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contact</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Area</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Rating</th>
-              <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredGarages.map((garage) => (
-              <tr key={garage.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/garages/${garage.id}`)}>
-                <td className="px-5 py-4 text-sm font-medium text-gray-900">{garage.name}</td>
-                <td className="px-5 py-4 text-sm text-gray-700">{garage.owner}</td>
-                <td className="px-5 py-4 text-sm text-gray-700">{garage.contact}</td>
-                <td className="px-5 py-4 text-sm text-gray-700">{garage.area}</td>
-                <td className="px-5 py-4 text-sm text-gray-700">{garage.status}</td>
-                <td className="px-5 py-4 text-sm text-gray-700">{garage.rating} ★</td>
-                <td className="px-5 py-4 text-right text-sm font-medium relative" ref={openMenu === garage.id ? menuRef : null}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenu(m => m === garage.id ? null : garage.id);
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <MoreVertical className="h-5 w-5" />
-                  </button>
-                  {openMenu === garage.id && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1 text-sm">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setOpenMenu(null); navigate(`/garages/${garage.id}`); }}
-                          className="block w-full text-left px-3 py-2 hover:bg-gray-50"
-                        >View Details</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setOpenMenu(null); /* suspend logic */ }}
-                          className="block w-full text-left px-3 py-2 hover:bg-gray-50"
-                        >Suspend Garage</button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setOpenMenu(null); /* delete logic */ }}
-                          className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
-                        >Delete Garage</button>
-                      </div>
-                    </div>
-                  )}
-                </td>
+      {!loading && !error && garages.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Garage Name</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Owner</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Contact</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Area</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Rating</th>
+                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {garages.map((garage) => (
+                <tr key={garage.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/garages/${garage.id}`)}>
+                  <td className="px-5 py-4 text-sm font-medium text-gray-900">{garage.name}</td>
+                  <td className="px-5 py-4 text-sm text-gray-700">{garage.owner}</td>
+                  <td className="px-5 py-4 text-sm text-gray-700">{garage.contact}</td>
+                  <td className="px-5 py-4 text-sm text-gray-700">{garage.area}</td>
+                  <td className="px-5 py-4 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      garage.isSuspended ? 'bg-red-100 text-red-700' :
+                      garage.isDeleted ? 'bg-gray-100 text-gray-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {garage.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-700">{garage.rating} ★</td>
+                  <td className="px-5 py-4 text-right text-sm font-medium relative" ref={openMenu === garage.id ? menuRef : null}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenu(m => m === garage.id ? null : garage.id);
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                    {openMenu === garage.id && (
+                      <div className="origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                        <div className="py-1 text-sm">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenu(null); navigate(`/garages/${garage.id}`); }}
+                            className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                          >View Details</button>
+                          {!garage.isDeleted && (
+                            <button
+                              onClick={(e) => handleSuspendGarage(garage, e)}
+                              className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                            >
+                              {garage.isSuspended ? 'Unsuspend Garage' : 'Suspend Garage'}
+                            </button>
+                          )}
+                          {!garage.isDeleted && (
+                            <button
+                              onClick={(e) => handleDeleteGarage(garage, e)}
+                              className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
+                            >Delete Garage</button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-  <div className="text-sm text-gray-600">Showing {filteredGarages.length} of {garages.length} garages</div>
-  <div className="text-xs text-gray-400">Pagination disabled (static mock)</div>
-      </div>
+      {!loading && !error && garages.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} garages
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2 text-sm text-gray-700">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
