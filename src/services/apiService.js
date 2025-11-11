@@ -89,8 +89,46 @@ export const apiService = {
   },
 
   // Users
-  getUsers: async () => {
-    return apiRequest('/users');
+  getUsers: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', role = '', status = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (role) queryParams.append('role', role);
+    if (status) queryParams.append('status', status);
+    
+    const response = await fetch(`${API_BASE_URL}/users?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch users');
+    }
+    
+    return result;
+  },
+
+  getUserDetail: async (userId) => {
+    const response = await fetch(`${API_BASE_URL}/user-detail/${userId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch user details');
+    }
+    
+    return result.data;
   },
 
   createUser: async (userData) => {

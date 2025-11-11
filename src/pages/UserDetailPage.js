@@ -1,29 +1,53 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { apiService } from '../services/apiService';
 
-// Mock detail data (replace with apiService.getUser(id) later)
-const mockUsers = {
-  1: { id: 1, name: 'Ali Khan', phone: '+92 300 1234567', email: 'ali@example.com', status: 'Active' },
-  2: { id: 2, name: 'Jane Smith', phone: '+1 555 222 3333', email: 'jane@example.com', status: 'Suspended' }
-};
-
-const badgeClass = (status) => status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600';
+const badgeClass = (status) => status === 'active' || status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600';
 
 const UserDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = mockUsers[id] || mockUsers[1];
-
+  
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
+  const fetchUserDetail = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await apiService.getUserDetail(id);
+      setUser(data);
+    } catch (err) {
+      console.error('Error fetching user detail:', err);
+      setError(err.message || 'Failed to load user details');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
-    const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    fetchUserDetail();
+  }, [fetchUserDetail]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <span className="ml-3 text-gray-600">Loading user details...</span>
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        {error || 'User not found'}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
