@@ -98,9 +98,37 @@ const Modal = ({ open, onClose, children, footer }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 overflow-y-auto flex-1">{children}</div>
-        <div className="px-6 pb-6 flex justify-end gap-3 border-t border-gray-200 pt-4">
+        <div className="p-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">{children}</div>
+        <div className="px-6 pb-6 flex justify-end gap-3 border-t border-gray-200 pt-4 flex-shrink-0">
           {footer}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ConfirmModal = ({ open, onClose, onConfirm, title, message, confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6">
+          <h3 className="text-xl font-semibold mb-3">{title}</h3>
+          <p className="text-gray-600">{message}</p>
+        </div>
+        <div className="px-6 pb-6 flex justify-end gap-3">
+          <button 
+            onClick={onClose}
+            className="px-5 py-2 rounded-md border border-gray-300 hover:bg-gray-50"
+          >
+            {cancelText}
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="px-5 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white"
+          >
+            {confirmText}
+          </button>
         </div>
       </div>
     </div>
@@ -115,6 +143,7 @@ const OrderManagementPage = () => {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [assignOpen, setAssignOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -130,6 +159,7 @@ const OrderManagementPage = () => {
   const [garages, setGarages] = useState([]);
   const [selectedGarage, setSelectedGarage] = useState(null);
   const [assigning, setAssigning] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
@@ -216,19 +246,29 @@ const OrderManagementPage = () => {
     }
   };
 
-  const handleCompleteOrder = async (order) => {
-    if (!window.confirm(`Mark order ${order.orderNumber} as completed?`)) return;
+  const handleCompleteOrder = (order) => {
+    setActiveOrder(order);
+    setConfirmOpen(true);
+  };
+
+  const confirmCompleteOrder = async () => {
+    if (!activeOrder) return;
     
     try {
+      setCompleting(true);
       const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       const adminId = userData.id;
       
       // Call API to update order status to completed
-      await apiService.assignGarage(order.id, order.garageId, adminId, 'completed');
+      await apiService.assignGarage(activeOrder.id, activeOrder.garageId, adminId, 'completed');
+      setConfirmOpen(false);
+      setActiveOrder(null);
       fetchOrders(); // Refresh list
     } catch (err) {
       console.error('Error completing order:', err);
       alert(err.message || 'Failed to complete order');
+    } finally {
+      setCompleting(false);
     }
   };
 
@@ -357,7 +397,7 @@ const OrderManagementPage = () => {
           <div className="text-sm text-gray-500 py-4">Loading garages...</div>
         )}
         
-        <div className="space-y-3">
+        <div className="space-y-3 pb-2">
           {garages.map(garage => (
             <div 
               key={garage.id} 
@@ -374,7 +414,24 @@ const OrderManagementPage = () => {
             </div>
           ))}
         </div>
+        
+        {garages.length > 10 && (
+          <div className="mt-4 text-sm text-gray-500 text-center">
+            Showing first 10 garages
+          </div>
+        )}
       </Modal>
+
+      {/* Confirm Complete Modal */}
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setActiveOrder(null); }}
+        onConfirm={confirmCompleteOrder}
+        title="Mark as Completed"
+        message={`Are you sure you want to mark order ${activeOrder?.orderNumber} as completed?`}
+        confirmText={completing ? 'Completing...' : 'Mark as Completed'}
+        cancelText="Cancel"
+      />
     </div>
   );
 };
