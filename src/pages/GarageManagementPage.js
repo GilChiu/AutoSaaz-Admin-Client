@@ -228,8 +228,9 @@ const GarageManagementPage = () => {
 
       {/* Garages Table */}
       {!loading && !error && garages.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="bg-white border border-gray-200 rounded-lg">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Garage Name</th>
@@ -313,6 +314,7 @@ const GarageManagementPage = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
