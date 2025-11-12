@@ -121,12 +121,14 @@ const OrderManagementPage = () => {
     try {
       setLoading(true);
       setError('');
+      console.log('Fetching orders with params:', { page, limit, search, status: currentStatus });
       const data = await apiService.getOrders({
         page,
         limit,
         search,
         status: currentStatus
       });
+      console.log('Orders response:', data);
       setOrders(data.orders || []);
       setTotal(data.total || 0);
       setTotalPages(data.totalPages || 1);
