@@ -80,14 +80,13 @@ const formatPaymentStatus = (status) => {
 const Modal = ({ open, onClose, children, footer }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-lg w-full max-w-3xl">
-        <div className="p-6">{children}</div>
-        <div className="px-6 pb-6 flex justify-end gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="px-6 pb-6 flex justify-end gap-3 border-t border-gray-200 pt-4">
           {footer}
         </div>
       </div>
-      <div className="absolute inset-0" onClick={onClose} />
     </div>
   );
 };
@@ -326,7 +325,7 @@ const OrderManagementPage = () => {
           <div className="text-sm text-gray-500 py-4">Loading garages...</div>
         )}
         
-        <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="space-y-3">
           {garages.map(garage => (
             <div 
               key={garage.id} 
