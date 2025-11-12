@@ -191,7 +191,7 @@ const GarageDetailPage = () => {
           <div className="relative" ref={menuRef}>
             <button onClick={() => setOpen(o => !o)} className="text-gray-400 hover:text-gray-600 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary-500">⋮</button>
             {open && (
-              <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg py-1 text-sm z-10">
+              <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg py-1 text-sm z-50">
                 {!garage.isDeleted && (
                   <button 
                     onClick={handleSuspend}

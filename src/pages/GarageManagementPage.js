@@ -28,6 +28,7 @@ const GarageManagementPage = () => {
 
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(null);
+  const [menuPosition, setMenuPosition] = useState('bottom'); // 'bottom' or 'top'
   const menuRef = useRef(null);
 
   const fetchGarages = useCallback(async (searchTerm = search) => {
@@ -227,7 +228,7 @@ const GarageManagementPage = () => {
 
       {/* Garages Table */}
       {!loading && !error && garages.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -261,6 +262,20 @@ const GarageManagementPage = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        
+                        // Calculate if menu should open upwards or downwards
+                        const buttonRect = e.currentTarget.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+                        const spaceBelow = viewportHeight - buttonRect.bottom;
+                        const menuHeight = 120; // Approximate menu height
+                        
+                        // If not enough space below, open upwards
+                        if (spaceBelow < menuHeight && buttonRect.top > menuHeight) {
+                          setMenuPosition('top');
+                        } else {
+                          setMenuPosition('bottom');
+                        }
+                        
                         setOpenMenu(m => m === garage.id ? null : garage.id);
                       }}
                       className="text-gray-400 hover:text-gray-600"
@@ -268,7 +283,9 @@ const GarageManagementPage = () => {
                       <MoreVertical className="h-5 w-5" />
                     </button>
                     {openMenu === garage.id && (
-                      <div className="origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div className={`origin-top-right absolute right-0 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 ${
+                        menuPosition === 'top' ? 'bottom-full mb-2' : 'mt-2'
+                      }`}>
                         <div className="py-1 text-sm">
                           <button
                             onClick={(e) => { e.stopPropagation(); setOpenMenu(null); navigate(`/garages/${garage.id}`); }}
