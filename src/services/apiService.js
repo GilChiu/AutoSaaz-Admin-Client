@@ -274,8 +274,81 @@ export const apiService = {
   },
 
   // Orders
-  getOrders: async () => {
-    return apiRequest('/orders');
+  getOrders: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    
+    const response = await fetch(`${API_BASE_URL}/orders?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch orders');
+    }
+    
+    return await response.json();
+  },
+
+  getOrderDetail: async (orderId) => {
+    const response = await fetch(`${API_BASE_URL}/order-detail/${orderId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch order details');
+    }
+    
+    return await response.json();
+  },
+
+  assignGarage: async (orderId, garageId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ garageId, adminId }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to assign garage');
+    }
+    
+    return await response.json();
+  },
+
+  getActiveGarages: async () => {
+    const response = await fetch(`${API_BASE_URL}/active-garages`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch active garages');
+    }
+    
+    return await response.json();
   },
 
   updateOrderStatus: async (orderId, status) => {
