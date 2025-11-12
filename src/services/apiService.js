@@ -315,7 +315,10 @@ export const apiService = {
     return await response.json();
   },
 
-  assignGarage: async (orderId, garageId, adminId = null) => {
+  assignGarage: async (orderId, garageId, adminId = null, status = null) => {
+    const body = { garageId, adminId };
+    if (status) body.status = status;
+    
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
       method: 'PATCH',
       headers: {
@@ -323,7 +326,7 @@ export const apiService = {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ garageId, adminId }),
+      body: JSON.stringify(body),
     });
     
     if (!response.ok) {

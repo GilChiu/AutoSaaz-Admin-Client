@@ -8,7 +8,7 @@ const StatusBadge = ({ status }) => {
   return <span className={`px-3 py-1 rounded-full text-xs font-medium ${cls}`}>{label}</span>;
 };
 
-const OrderCard = ({ order, onAssign }) => (
+const OrderCard = ({ order, onAssign, onComplete }) => (
   <div className="bg-white border border-gray-200 rounded-lg p-5">
     <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
       <div>
@@ -43,7 +43,23 @@ const OrderCard = ({ order, onAssign }) => (
       </div>
       <div className="flex items-center gap-3">
         <StatusBadge status={order.status} />
-        <button onClick={() => onAssign(order)} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md">Assign / Change Garage</button>
+        {/* Show buttons based on status */}
+        {order.status === 'pending' && (
+          <button onClick={() => onAssign(order)} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+            Assign / Change Garage
+          </button>
+        )}
+        {order.status === 'in_progress' && (
+          <>
+            <button onClick={() => onAssign(order)} className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+              Assign / Change Garage
+            </button>
+            <button onClick={() => onComplete(order)} className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md">
+              Mark as Completed
+            </button>
+          </>
+        )}
+        {/* Completed status: no buttons */}
       </div>
     </div>
   </div>
@@ -200,6 +216,22 @@ const OrderManagementPage = () => {
     }
   };
 
+  const handleCompleteOrder = async (order) => {
+    if (!window.confirm(`Mark order ${order.orderNumber} as completed?`)) return;
+    
+    try {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = userData.id;
+      
+      // Call API to update order status to completed
+      await apiService.assignGarage(order.id, order.garageId, adminId, 'completed');
+      fetchOrders(); // Refresh list
+    } catch (err) {
+      console.error('Error completing order:', err);
+      alert(err.message || 'Failed to complete order');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
@@ -242,7 +274,7 @@ const OrderManagementPage = () => {
         <div className="flex gap-6">
           <div className="flex-1 space-y-4">
             {orders.map(order => (
-              <OrderCard key={order.id} order={order} onAssign={openAssign} />
+              <OrderCard key={order.id} order={order} onAssign={openAssign} onComplete={handleCompleteOrder} />
             ))}
             {orders.length === 0 && (
               <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
