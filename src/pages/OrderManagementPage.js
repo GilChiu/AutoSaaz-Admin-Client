@@ -95,7 +95,7 @@ const Modal = ({ open, onClose, children, footer }) => {
 const OrderManagementPage = () => {
   const { status } = useParams();
   const statusMap = { 'in-progress': 'in_progress', 'completed': 'completed', 'pending': 'pending' };
-  const currentStatus = statusMap[status] || 'pending';
+  const currentStatus = status ? statusMap[status] : ''; // Don't default to 'pending', allow empty to show all
   
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
