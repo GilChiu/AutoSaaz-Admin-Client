@@ -228,7 +228,7 @@ const GarageManagementPage = () => {
 
       {/* Garages Table */}
       {!loading && !error && garages.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-auto mb-6">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
