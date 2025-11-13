@@ -105,8 +105,18 @@ const DisputesPage = () => {
                 </tr>
               ) : (
                 disputes.map(d => (
-                  <tr key={d.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 text-sm text-gray-800">{d.code}</td>
+                  <tr 
+                    key={d.id} 
+                    className={`hover:bg-gray-50 ${d.escalated ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
+                  >
+                    <td className="px-5 py-3 text-sm text-gray-800">
+                      {d.code}
+                      {d.escalated && (
+                        <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded">
+                          ESCALATED
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 text-sm text-gray-800">{d.userName}</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{d.garageName}</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{formatType(d.type)}</td>

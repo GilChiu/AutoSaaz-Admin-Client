@@ -363,13 +363,21 @@ const DisputeDetailPage = () => {
             conversation.map((msg, idx) => {
               const isAdmin = msg.senderType === 'admin' || msg.senderType === 'Admin';
               const isEvidenceRequest = msg.isEvidenceRequest;
+              const isEscalationNotice = msg.isEscalationNotice;
               return (
                 <div key={idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'} ${isEvidenceRequest ? 'bg-blue-50 p-3 rounded-lg' : ''}`}>
+                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'} ${isEvidenceRequest ? 'bg-blue-50 p-3 rounded-lg' : ''} ${isEscalationNotice ? 'bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-500' : ''}`}>
                     {isEvidenceRequest && (
                       <div className="mb-2 flex items-center gap-2">
                         <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
                           Evidence Request
+                        </span>
+                      </div>
+                    )}
+                    {isEscalationNotice && (
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="text-xs font-semibold text-yellow-800 bg-yellow-200 px-2 py-1 rounded">
+                          ⚠️ Case Escalated
                         </span>
                       </div>
                     )}
