@@ -1,4 +1,4 @@
-import { FUNCTIONS_URL } from '../config/supabase';
+import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '../config/supabase';
 
 /**
  * Get authentication token from localStorage
@@ -17,13 +17,13 @@ const getAuthToken = () => {
 const getHeaders = () => {
   const token = getAuthToken();
   const headers = {
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     'Content-Type': 'application/json',
   };
   
   if (token) {
-    // Try both admin-specific and fallback token headers
+    // Send admin token in x-admin-token header (admin-specific)
     headers['x-admin-token'] = token;
-    headers['x-access-token'] = token; // Fallback for compatibility
   }
   
   console.log('Dashboard request headers:', { hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : 'none' });
