@@ -150,7 +150,7 @@ const DisputeDetailPage = () => {
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${id}/${fileName}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('dispute-attachments')
           .upload(filePath, selectedFile);
 
