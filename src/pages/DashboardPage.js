@@ -45,8 +45,8 @@ const DashboardPage = () => {
       // Map recent orders with proper structure
       const mappedOrders = (data.recentOrders || []).map(order => ({
         id: order.id,
-        customer: order.customer?.customer_profiles?.[0]?.full_name || order.customer_name || 'Unknown',
-        garage: order.garage?.garage_profiles?.[0]?.garage_name || 'Unknown Garage',
+        customer: order.customer_profile?.full_name || order.customer?.email || order.customer_name || 'Unknown',
+        garage: order.garage_profile?.garage_name || order.garage?.email || 'Unknown Garage',
         service: order.service_type || 'N/A',
         amount: parseFloat(order.commission_amount || order.actual_cost || 0),
         status: order.status || 'unknown',
