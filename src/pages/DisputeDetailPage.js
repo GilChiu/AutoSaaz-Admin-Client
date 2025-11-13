@@ -295,17 +295,22 @@ const DisputeDetailPage = () => {
         <h3 className="text-lg font-bold text-gray-900 mb-4">Conversation</h3>
         <div className="space-y-4 mb-6">
           {conversation && conversation.length > 0 ? (
-            conversation.map((msg, idx) => (
-              <div key={idx} className="border-l-4 border-gray-200 pl-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-900">
-                    {msg.senderType || 'User'}
-                  </span>
-                  <span className="text-xs text-gray-500">{formatDate(msg.createdAt)}</span>
+            conversation.map((msg, idx) => {
+              const isAdmin = msg.senderType === 'admin' || msg.senderType === 'Admin';
+              return (
+                <div key={idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'}`}>
+                    <div className={`flex items-center gap-2 mb-1 ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                      <span className="text-sm font-medium text-gray-900">
+                        {msg.senderType || 'User'}
+                      </span>
+                      <span className="text-xs text-gray-500">{formatDate(msg.createdAt)}</span>
+                    </div>
+                    <p className={`text-gray-700 text-sm ${isAdmin ? 'text-right' : 'text-left'}`}>{msg.body}</p>
+                  </div>
                 </div>
-                <p className="text-gray-700 text-sm">{msg.body}</p>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p className="text-gray-500 text-sm">No messages yet.</p>
           )}
