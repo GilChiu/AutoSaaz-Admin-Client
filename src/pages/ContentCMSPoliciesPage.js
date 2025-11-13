@@ -22,7 +22,7 @@ const ContentCMSPoliciesPage = () => {
     meta_description: '',
   });
 
-  const fetchPolicies = useCallback(async () => {sync () => {
+  const fetchPolicies = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);

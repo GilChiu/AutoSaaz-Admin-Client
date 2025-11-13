@@ -26,7 +26,7 @@ const ContentAppBannersPage = () => {
     end_date: '',
   });
 
-  const fetchBanners = useCallback(async () => {sync () => {
+  const fetchBanners = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);

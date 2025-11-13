@@ -23,7 +23,7 @@ const ContentPushNotificationsPage = () => {
     priority: 'normal',
   });
 
-  const fetchNotifications = useCallback(async () => {sync () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
