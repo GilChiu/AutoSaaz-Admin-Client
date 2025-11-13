@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
 
 const DisputeDetailPage = () => {
   const { id } = useParams();
@@ -24,6 +30,9 @@ const DisputeDetailPage = () => {
   // Message input state
   const [newMessage, setNewMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef(null);
   
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -120,8 +129,8 @@ const DisputeDetailPage = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) {
-      alert('Please enter a message');
+    if (!newMessage.trim() && !selectedFile) {
+      alert('Please enter a message or select a file');
       return;
     }
 
@@ -130,14 +139,46 @@ const DisputeDetailPage = () => {
       const userData = localStorage.getItem('userData');
       const adminId = userData ? JSON.parse(userData).id : null;
       
-      await apiService.addDisputeMessage(id, adminId, newMessage);
+      let attachmentUrl = null;
+      let attachmentType = null;
+      let attachmentName = null;
+
+      // Upload file if selected
+      if (selectedFile) {
+        setUploadingFile(true);
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${id}/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('dispute-attachments')
+          .upload(filePath, selectedFile);
+
+        if (uploadError) {
+          throw new Error('Failed to upload file: ' + uploadError.message);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('dispute-attachments')
+          .getPublicUrl(filePath);
+
+        attachmentUrl = publicUrl;
+        attachmentType = selectedFile.type;
+        attachmentName = selectedFile.name;
+        setUploadingFile(false);
+      }
+      
+      await apiService.addDisputeMessage(id, adminId, newMessage || 'Attachment', attachmentUrl, attachmentType, attachmentName);
       setNewMessage('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       await fetchDisputeDetail();
     } catch (err) {
       console.error('Error sending message:', err);
       alert('Failed to send message: ' + err.message);
     } finally {
       setSendingMessage(false);
+      setUploadingFile(false);
     }
   };
 
@@ -323,9 +364,17 @@ const DisputeDetailPage = () => {
           {conversation && conversation.length > 0 ? (
             conversation.map((msg, idx) => {
               const isAdmin = msg.senderType === 'admin' || msg.senderType === 'Admin';
+              const isEvidenceRequest = msg.isEvidenceRequest;
               return (
                 <div key={idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'}`}>
+                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'} ${isEvidenceRequest ? 'bg-blue-50 p-3 rounded-lg' : ''}`}>
+                    {isEvidenceRequest && (
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                          📎 Evidence Request
+                        </span>
+                      </div>
+                    )}
                     <div className={`flex items-center gap-2 mb-1 ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                       <span className="text-sm font-medium text-gray-900">
                         {msg.senderType || 'User'}
@@ -333,6 +382,22 @@ const DisputeDetailPage = () => {
                       <span className="text-xs text-gray-500">{formatDate(msg.createdAt)}</span>
                     </div>
                     <p className={`text-gray-700 text-sm ${isAdmin ? 'text-right' : 'text-left'}`}>{msg.body}</p>
+                    {msg.attachmentUrl && (
+                      <div className="mt-2">
+                        {msg.attachmentType?.startsWith('image/') ? (
+                          <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                            <img src={msg.attachmentUrl} alt={msg.attachmentName} className="max-w-full h-auto rounded border" style={{ maxHeight: '200px' }} />
+                          </a>
+                        ) : (
+                          <a href={msg.attachmentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            {msg.attachmentName || 'Download Attachment'}
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -354,13 +419,37 @@ const DisputeDetailPage = () => {
             className="w-full border border-gray-300 rounded-md p-3 text-sm resize-none"
             rows="3"
           />
-          <div className="flex justify-end mt-3">
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                className="hidden"
+                id="file-upload"
+              />
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                Attach File
+              </label>
+              {selectedFile && (
+                <span className="text-sm text-gray-600">
+                  {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                </span>
+              )}
+            </div>
             <button
               onClick={handleSendMessage}
-              disabled={sendingMessage || !newMessage.trim()}
+              disabled={sendingMessage || uploadingFile || (!newMessage.trim() && !selectedFile)}
               className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              {sendingMessage ? 'Sending...' : 'Send'}
+              {uploadingFile ? 'Uploading...' : sendingMessage ? 'Sending...' : 'Send'}
             </button>
           </div>
         </div>

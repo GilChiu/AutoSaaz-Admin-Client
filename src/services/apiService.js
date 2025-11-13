@@ -563,7 +563,18 @@ export const apiService = {
     return await response.json();
   },
 
-  addDisputeMessage: async (disputeId, senderId, body) => {
+  addDisputeMessage: async (disputeId, senderId, body, attachmentUrl = null, attachmentType = null, attachmentName = null) => {
+    const payload = {
+      senderId,
+      body
+    };
+    
+    if (attachmentUrl) {
+      payload.attachmentUrl = attachmentUrl;
+      payload.attachmentType = attachmentType;
+      payload.attachmentName = attachmentName;
+    }
+    
     const response = await fetch(`${API_BASE_URL}/dispute-detail/${disputeId}`, {
       method: 'POST',
       headers: {
@@ -571,10 +582,7 @@ export const apiService = {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({
-        senderId,
-        body
-      }),
+      body: JSON.stringify(payload),
     });
     
     if (!response.ok) {
