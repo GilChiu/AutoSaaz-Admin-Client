@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import ConfirmModal from '../components/ConfirmModal';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const SummaryRow = ({ label, value }) => (
   <div className="flex items-center justify-between text-sm py-1">
@@ -350,10 +350,9 @@ const PaymentDetailPage = () => {
         onClose={() => setShowReleaseModal(false)}
         onConfirm={handleReleasePayment}
         title="Release Payment"
-        message={`Are you sure you want to release this payment to the garage? The amount of ${transaction.netAmount?.toLocaleString()} AED will be transferred.`}
-        confirmText="Release Payment"
-        confirmButtonClass="bg-green-600 hover:bg-green-700"
-        loading={actionLoading}
+        message={`Are you sure you want to release this payment to the garage? The amount of ${transaction.netAmount?.toLocaleString()} AED will be transferred.${actionLoading ? ' Please wait...' : ''}`}
+        confirmText={actionLoading ? 'Releasing...' : 'Release Payment'}
+        type="info"
       />
 
       {/* Flag Payment Modal */}
