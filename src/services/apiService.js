@@ -597,4 +597,94 @@ export const apiService = {
   getDashboardStats: async () => {
     return apiRequest('/dashboard/stats');
   },
+
+  // Support Tickets
+  getSupportTickets: async (senderType = null, status = null) => {
+    let url = '/support-tickets?';
+    if (senderType) url += `senderType=${senderType}&`;
+    if (status) url += `status=${status}`;
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get support tickets');
+    }
+    
+    const data = await response.json();
+    return data.tickets || [];
+  },
+
+  getSupportTicketDetail: async (ticketId) => {
+    const response = await fetch(`${API_BASE_URL}/support-tickets/${ticketId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get ticket detail');
+    }
+    
+    return await response.json();
+  },
+
+  addSupportTicketMessage: async (ticketId, senderId, message) => {
+    const response = await fetch(`${API_BASE_URL}/support-tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'add_message',
+        senderId,
+        senderType: 'admin',
+        message
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add message');
+    }
+    
+    return await response.json();
+  },
+
+  updateSupportTicketStatus: async (ticketId, status, adminId, resolutionNotes = null) => {
+    const response = await fetch(`${API_BASE_URL}/support-tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'update_status',
+        status,
+        adminId,
+        resolutionNotes
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update ticket status');
+    }
+    
+    return await response.json();
+  },
 };
