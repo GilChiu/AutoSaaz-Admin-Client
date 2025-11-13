@@ -32,6 +32,31 @@ const DisputeDetailPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Poll for new messages every 5 seconds
+  useEffect(() => {
+    if (!id) return;
+    
+    const pollInterval = setInterval(async () => {
+      try {
+        const data = await apiService.getDisputeDetail(id);
+        // Only update conversation if new messages are available
+        if (data?.conversation && disputeData?.conversation) {
+          if (data.conversation.length > disputeData.conversation.length) {
+            setDisputeData(prev => ({
+              ...prev,
+              conversation: data.conversation
+            }));
+          }
+        }
+      } catch (err) {
+        // Silent fail for polling - don't show errors
+        console.error('Error polling messages:', err);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [id, disputeData?.conversation?.length]);
+
   const fetchDisputeDetail = async () => {
     try {
       setLoading(true);
