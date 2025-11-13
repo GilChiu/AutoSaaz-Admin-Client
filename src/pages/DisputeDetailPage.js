@@ -55,6 +55,7 @@ const DisputeDetailPage = () => {
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(pollInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, disputeData?.conversation?.length]);
 
   const fetchDisputeDetail = async () => {
