@@ -184,10 +184,15 @@ const Sidebar = () => {
       <div className="dashboard-sidebar-footer">
         <ul>
           <li>
-            <button className="dashboard-nav-link" type="button">
+            <NavLink
+              to="/content/service-settings"
+              className={({ isActive }) =>
+                `dashboard-nav-link ${isActive ? "active" : ""}`
+              }
+            >
               <span className="dashboard-nav-icon"><Settings size={16} /></span>
               Settings
-            </button>
+            </NavLink>
           </li>
           <li>
             <button onClick={logout} className="dashboard-logout-btn" type="button">
