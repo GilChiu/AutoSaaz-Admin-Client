@@ -369,7 +369,7 @@ const DisputeDetailPage = () => {
                     {isEvidenceRequest && (
                       <div className="mb-2 flex items-center gap-2">
                         <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                          📎 Evidence Request
+                          Evidence Request
                         </span>
                       </div>
                     )}
