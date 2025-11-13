@@ -364,9 +364,10 @@ const DisputeDetailPage = () => {
               const isAdmin = msg.senderType === 'admin' || msg.senderType === 'Admin';
               const isEvidenceRequest = msg.isEvidenceRequest;
               const isEscalationNotice = msg.isEscalationNotice;
+              const isResolutionNotice = msg.isResolutionNotice;
               return (
                 <div key={idx} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'} ${isEvidenceRequest ? 'bg-blue-50 p-3 rounded-lg' : ''} ${isEscalationNotice ? 'bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-500' : ''}`}>
+                  <div className={`max-w-[70%] ${isAdmin ? 'border-r-4 border-orange-500 pr-4' : 'border-l-4 border-gray-200 pl-4'} ${isEvidenceRequest ? 'bg-blue-50 p-3 rounded-lg' : ''} ${isEscalationNotice ? 'bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-500' : ''} ${isResolutionNotice ? 'bg-green-50 p-3 rounded-lg border-l-4 border-green-500' : ''}`}>
                     {isEvidenceRequest && (
                       <div className="mb-2 flex items-center gap-2">
                         <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">
@@ -381,9 +382,16 @@ const DisputeDetailPage = () => {
                         </span>
                       </div>
                     )}
+                    {isResolutionNotice && (
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="text-xs font-semibold text-green-800 bg-green-200 px-2 py-1 rounded">
+                          ✓ Case Resolved
+                        </span>
+                      </div>
+                    )}
                     <div className={`flex items-center gap-2 mb-1 ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                       <span className="text-sm font-medium text-gray-900">
-                        {msg.senderType || 'User'}
+                        {msg.senderName || msg.senderType || 'User'}
                       </span>
                       <span className="text-xs text-gray-500">{formatDate(msg.createdAt)}</span>
                     </div>
