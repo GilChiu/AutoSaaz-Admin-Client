@@ -21,8 +21,12 @@ const getHeaders = () => {
   };
   
   if (token) {
-    headers['x-admin-token'] = token; // Admin-specific token header
+    // Try both admin-specific and fallback token headers
+    headers['x-admin-token'] = token;
+    headers['x-access-token'] = token; // Fallback for compatibility
   }
+  
+  console.log('Dashboard request headers:', { hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : 'none' });
   
   return headers;
 };
@@ -49,17 +53,33 @@ const dashboardStatsService = {
    */
   getDashboardStats: async () => {
     try {
+      const token = getAuthToken();
+      console.log('Fetching dashboard stats with token:', token ? 'Token exists (length: ' + token.length + ')' : 'NO TOKEN');
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       const response = await fetch(`${FUNCTIONS_URL}/admin-dashboard-stats`, {
         method: 'GET',
         headers: getHeaders(),
       });
 
+      console.log('Dashboard API response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Dashboard API error response:', errorData);
+        
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please log out and log in again to refresh your admin token.');
+        }
+        
         throw new Error(errorData.error || `Failed to fetch dashboard stats: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('Dashboard API success response:', data);
       return data;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
