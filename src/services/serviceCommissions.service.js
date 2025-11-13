@@ -7,14 +7,16 @@ const API_BASE_URL = process.env.REACT_APP_FUNCTIONS_URL || FUNCTIONS_URL;
 
 /**
  * Gets authentication token from localStorage
+ * Admin uses 'authToken' as primary storage key
  * @returns {string|null}
  */
 function getAuthToken() {
-  return localStorage.getItem('accessToken') || localStorage.getItem('authToken') || localStorage.getItem('token');
+  return localStorage.getItem('authToken') || localStorage.getItem('accessToken') || localStorage.getItem('token');
 }
 
 /**
- * Creates headers with authentication
+ * Creates headers with authentication for admin API calls
+ * Admin tokens use x-admin-token header (or x-access-token for compatibility)
  * @returns {HeadersInit}
  */
 function getHeaders() {
@@ -23,7 +25,8 @@ function getHeaders() {
     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     'Content-Type': 'application/json',
   };
-  if (token) headers['x-access-token'] = token;
+  // Send admin token in x-admin-token header (admin-specific)
+  if (token) headers['x-admin-token'] = token;
   return headers;
 }
 
