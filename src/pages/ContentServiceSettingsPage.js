@@ -99,7 +99,10 @@ const ContentServiceSettingsPage = () => {
       setError(null);
       const response = await getAllGaragesWithServices();
       
+      console.log('API Response:', response);
+      
       if (response.success && response.data?.garages) {
+        console.log('Garages loaded:', response.data.garages.length);
         setGarages(response.data.garages);
       } else {
         throw new Error('Failed to load garages');
@@ -203,8 +206,10 @@ const ContentServiceSettingsPage = () => {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Service Setting</h2>
           
           {garages.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No garages found
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg font-medium mb-2">No Garages with Services Found</p>
+              <p className="text-sm">Garages need to add services in their Service Management page first.</p>
+              <p className="text-sm mt-2">Once garages add services, they will appear here for commission management.</p>
             </div>
           ) : (
             <div className="space-y-6">
