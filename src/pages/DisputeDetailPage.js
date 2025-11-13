@@ -104,7 +104,7 @@ const DisputeDetailPage = () => {
       const userData = localStorage.getItem('userData');
       const adminId = userData ? JSON.parse(userData).id : null;
       
-      await apiService.addDisputeMessage(id, newMessage, 'admin', adminId);
+      await apiService.addDisputeMessage(id, adminId, newMessage);
       setNewMessage('');
       await fetchDisputeDetail();
     } catch (err) {
