@@ -87,7 +87,6 @@ const ContentServiceSettingsPage = () => {
   const [open, setOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedGarageId, setSelectedGarageId] = useState(null);
-  const [saving, setSaving] = useState(false);
 
   // Load garages with services on mount
   useEffect(() => {
@@ -127,7 +126,6 @@ const ContentServiceSettingsPage = () => {
 
   const handleConfirmCommission = async (serviceId, commissionPercentage) => {
     try {
-      setSaving(true);
       const percentage = parseFloat(commissionPercentage);
       
       if (isNaN(percentage) || percentage < 0 || percentage > 100) {
@@ -165,8 +163,6 @@ const ContentServiceSettingsPage = () => {
     } catch (err) {
       console.error('Error setting commission:', err);
       alert(err.message || 'Failed to set commission');
-    } finally {
-      setSaving(false);
     }
   };
 
