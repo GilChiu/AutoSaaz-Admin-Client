@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Send, Edit, Trash2, Search, Filter, Bell, Users, Calendar } from 'lucide-react';
 import pushNotificationsService from '../services/pushNotifications.service';
 
@@ -23,11 +23,7 @@ const ContentPushNotificationsPage = () => {
     priority: 'normal',
   });
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [statusFilter, targetFilter]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {sync () => {
     try {
       setLoading(true);
       setError(null);
@@ -43,7 +39,11 @@ const ContentPushNotificationsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, targetFilter]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Search, FileText, Eye, EyeOff, Globe, Calendar } from 'lucide-react';
 import cmsPoliciesService from '../services/cmsPolicies.service';
 
@@ -22,11 +22,7 @@ const ContentCMSPoliciesPage = () => {
     meta_description: '',
   });
 
-  useEffect(() => {
-    fetchPolicies();
-  }, [typeFilter, publishedFilter, languageFilter]);
-
-  const fetchPolicies = async () => {
+  const fetchPolicies = useCallback(async () => {sync () => {
     try {
       setLoading(true);
       setError(null);
@@ -43,7 +39,11 @@ const ContentCMSPoliciesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [typeFilter, publishedFilter, languageFilter]);
+
+  useEffect(() => {
+    fetchPolicies();
+  }, [fetchPolicies]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

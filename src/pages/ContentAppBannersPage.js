@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Search, Image, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import appBannersService from '../services/appBanners.service';
 
@@ -26,11 +26,7 @@ const ContentAppBannersPage = () => {
     end_date: '',
   });
 
-  useEffect(() => {
-    fetchBanners();
-  }, [activeFilter, platformFilter]);
-
-  const fetchBanners = async () => {
+  const fetchBanners = useCallback(async () => {sync () => {
     try {
       setLoading(true);
       setError(null);
@@ -46,7 +42,11 @@ const ContentAppBannersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeFilter, platformFilter]);
+
+  useEffect(() => {
+    fetchBanners();
+  }, [fetchBanners]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
