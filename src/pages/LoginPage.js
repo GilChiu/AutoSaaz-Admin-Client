@@ -29,12 +29,15 @@ const LoginPage = () => {
     setLoading(true);
     setError("");
 
-  const result = await login({ email: credentials.email, password: credentials.password });
+    const result = await login({ email: credentials.email, password: credentials.password });
+    
+    console.log('Login result:', result);
     
     if (result.success) {
       navigate("/dashboard");
     } else {
-      setError(result.error);
+      console.error('Login failed:', result.error);
+      setError(result.error || 'Login failed. Please check your credentials.');
     }
     
     setLoading(false);
@@ -42,8 +45,9 @@ const LoginPage = () => {
 
   const sendCode = () => {
     if (codeSent) return;
-    // Simulate sending 2FA code
-    setCodeSent(true);
+    // Simulate sending 2FA code (disabled for now)
+    console.log('Send code clicked - 2FA disabled');
+    // setCodeSent(true);
   };
 
   return (
