@@ -449,6 +449,142 @@ export const apiService = {
     return await response.json();
   },
 
+  // Disputes & Revisions
+  getDisputes: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '', type = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    if (type) queryParams.append('type', type);
+    
+    const response = await fetch(`${API_BASE_URL}/disputes?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch disputes');
+    }
+    
+    return await response.json();
+  },
+
+  getDisputeDetail: async (disputeId) => {
+    const response = await fetch(`${API_BASE_URL}/dispute-detail/${disputeId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch dispute details');
+    }
+    
+    return await response.json();
+  },
+
+  requestEvidence: async (disputeId, message, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/disputes/${disputeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'request_evidence',
+        message,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to request evidence');
+    }
+    
+    return await response.json();
+  },
+
+  resolveCase: async (disputeId, message, notes, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/disputes/${disputeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'resolve',
+        message,
+        notes,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to resolve case');
+    }
+    
+    return await response.json();
+  },
+
+  escalateCase: async (disputeId, reason, message, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/disputes/${disputeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'escalate',
+        reason,
+        message,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to escalate case');
+    }
+    
+    return await response.json();
+  },
+
+  addDisputeMessage: async (disputeId, senderId, body) => {
+    const response = await fetch(`${API_BASE_URL}/dispute-detail/${disputeId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        senderId,
+        body
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add message');
+    }
+    
+    return await response.json();
+  },
+
   // Dashboard Stats
   getDashboardStats: async () => {
     return apiRequest('/dashboard/stats');
