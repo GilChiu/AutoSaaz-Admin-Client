@@ -1,5 +1,7 @@
-// API Base URL - Update this to match your backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '../config/supabase';
+
+// API Base URL - Admin uses Supabase Functions
+const API_BASE_URL = process.env.REACT_APP_FUNCTIONS_URL || FUNCTIONS_URL;
 
 // Helper function to handle API requests
 const apiRequest = async (endpoint, options = {}) => {
@@ -13,8 +15,14 @@ const apiRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // For Supabase Functions: include anon key + x-access-token
+  if (API_BASE_URL.includes('.functions.supabase.co')) {
+    config.headers['Authorization'] = `Bearer ${SUPABASE_ANON_KEY}`;
+    if (token) {
+      config.headers['x-access-token'] = token;
+    }
+  } else if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
   }
 
   try {
@@ -35,19 +43,43 @@ const apiRequest = async (endpoint, options = {}) => {
 export const apiService = {
   // Authentication
   login: async (credentials) => {
-    // Mock login for development - replace with actual API call
-    if (credentials.email === 'admin@autosaaz.com' && credentials.password === 'admin123') {
-      return {
-        user: {
-          id: 1,
-          name: 'Admin User',
-          email: 'admin@autosaaz.com',
-          role: 'admin'
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        token: 'mock-jwt-token'
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Login failed');
+      }
+
+      // Store tokens
+      if (result.data) {
+        localStorage.setItem('authToken', result.data.accessToken);
+        localStorage.setItem('refreshToken', result.data.refreshToken);
+        localStorage.setItem('userData', JSON.stringify(result.data.user));
+        localStorage.setItem('userProfile', JSON.stringify(result.data.profile));
+      }
+
+      return {
+        user: result.data.user,
+        profile: result.data.profile,
+        token: result.data.accessToken,
       };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-    throw new Error('Invalid credentials');
   },
 
   logout: async () => {
@@ -57,8 +89,46 @@ export const apiService = {
   },
 
   // Users
-  getUsers: async () => {
-    return apiRequest('/users');
+  getUsers: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', role = '', status = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (role) queryParams.append('role', role);
+    if (status) queryParams.append('status', status);
+    
+    const response = await fetch(`${API_BASE_URL}/users?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch users');
+    }
+    
+    return result;
+  },
+
+  getUserDetail: async (userId) => {
+    const response = await fetch(`${API_BASE_URL}/user-detail/${userId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch user details');
+    }
+    
+    return result.data;
   },
 
   createUser: async (userData) => {
@@ -82,8 +152,111 @@ export const apiService = {
   },
 
   // Garages
-  getGarages: async () => {
-    return apiRequest('/garages');
+  getGarages: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '', includeDeleted = false } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    if (includeDeleted) queryParams.append('includeDeleted', 'true');
+    
+    const response = await fetch(`${API_BASE_URL}/garages?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch garages');
+    }
+    
+    return result;
+  },
+
+  getGarageDetail: async (garageId) => {
+    const response = await fetch(`${API_BASE_URL}/garage-detail/${garageId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to fetch garage details');
+    }
+    
+    return result.data;
+  },
+
+  suspendGarage: async (garageId, reason = '', adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/garages`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        garageId,
+        action: 'suspend',
+        reason,
+        adminId
+      }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to suspend garage');
+    }
+    
+    return result;
+  },
+
+  unsuspendGarage: async (garageId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/garages`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        garageId,
+        action: 'unsuspend',
+        adminId
+      }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to unsuspend garage');
+    }
+    
+    return result;
+  },
+
+  deleteGarage: async (garageId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/garages?garageId=${garageId}&adminId=${adminId || ''}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to delete garage');
+    }
+    
+    return result;
   },
 
   createGarage: async (garageData) => {
@@ -100,15 +273,85 @@ export const apiService = {
     });
   },
 
-  deleteGarage: async (garageId) => {
-    return apiRequest(`/garages/${garageId}`, {
-      method: 'DELETE'
+  // Orders
+  getOrders: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    
+    const response = await fetch(`${API_BASE_URL}/orders?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
     });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch orders');
+    }
+    
+    return await response.json();
   },
 
-  // Orders
-  getOrders: async () => {
-    return apiRequest('/orders');
+  getOrderDetail: async (orderId) => {
+    const response = await fetch(`${API_BASE_URL}/order-detail/${orderId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch order details');
+    }
+    
+    return await response.json();
+  },
+
+  assignGarage: async (orderId, garageId, adminId = null, status = null) => {
+    const body = { garageId, adminId };
+    if (status) body.status = status;
+    
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to assign garage');
+    }
+    
+    return await response.json();
+  },
+
+  getActiveGarages: async () => {
+    const response = await fetch(`${API_BASE_URL}/active-garages`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch active garages');
+    }
+    
+    return await response.json();
   },
 
   updateOrderStatus: async (orderId, status) => {
@@ -118,8 +361,330 @@ export const apiService = {
     });
   },
 
+  // Payments
+  getPayments: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '', type = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    if (type) queryParams.append('type', type);
+    
+    const response = await fetch(`${API_BASE_URL}/payments?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch payments');
+    }
+    
+    return await response.json();
+  },
+
+  getPaymentDetail: async (transactionId) => {
+    const response = await fetch(`${API_BASE_URL}/payment-detail/${transactionId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch payment details');
+    }
+    
+    return await response.json();
+  },
+
+  releasePayment: async (transactionId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/payments/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'release',
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to release payment');
+    }
+    
+    return await response.json();
+  },
+
+  flagPayment: async (transactionId, reason, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/payments/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'flag',
+        reason,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to flag payment');
+    }
+    
+    return await response.json();
+  },
+
+  // Disputes & Revisions
+  getDisputes: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '', type = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    if (type) queryParams.append('type', type);
+    
+    const response = await fetch(`${API_BASE_URL}/disputes?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch disputes');
+    }
+    
+    return await response.json();
+  },
+
+  getDisputeDetail: async (disputeId) => {
+    const response = await fetch(`${API_BASE_URL}/dispute-detail/${disputeId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch dispute details');
+    }
+    
+    return await response.json();
+  },
+
+  requestEvidence: async (disputeId, message, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/disputes/${disputeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'request_evidence',
+        message,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to request evidence');
+    }
+    
+    return await response.json();
+  },
+
+  resolveCase: async (disputeId, message, notes, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/disputes/${disputeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'resolve',
+        message,
+        notes,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to resolve case');
+    }
+    
+    return await response.json();
+  },
+
+  escalateCase: async (disputeId, reason, message, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/disputes/${disputeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'escalate',
+        reason,
+        message,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to escalate case');
+    }
+    
+    return await response.json();
+  },
+
+  addDisputeMessage: async (disputeId, senderId, body, attachmentUrl = null, attachmentType = null, attachmentName = null) => {
+    const payload = {
+      senderId,
+      body
+    };
+    
+    if (attachmentUrl) {
+      payload.attachmentUrl = attachmentUrl;
+      payload.attachmentType = attachmentType;
+      payload.attachmentName = attachmentName;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/dispute-detail/${disputeId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add message');
+    }
+    
+    return await response.json();
+  },
+
   // Dashboard Stats
   getDashboardStats: async () => {
     return apiRequest('/dashboard/stats');
+  },
+
+  // Support Tickets
+  getSupportTickets: async (senderType = null, status = null) => {
+    let url = '/support-tickets?';
+    if (senderType) url += `senderType=${senderType}&`;
+    if (status) url += `status=${status}`;
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get support tickets');
+    }
+    
+    const data = await response.json();
+    return data.tickets || [];
+  },
+
+  getSupportTicketDetail: async (ticketId) => {
+    const response = await fetch(`${API_BASE_URL}/support-tickets/${ticketId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get ticket detail');
+    }
+    
+    return await response.json();
+  },
+
+  addSupportTicketMessage: async (ticketId, senderId, message) => {
+    const response = await fetch(`${API_BASE_URL}/support-tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'add_message',
+        senderId,
+        senderType: 'admin',
+        message
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add message');
+    }
+    
+    return await response.json();
+  },
+
+  updateSupportTicketStatus: async (ticketId, status, adminId, resolutionNotes = null) => {
+    const response = await fetch(`${API_BASE_URL}/support-tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'update_status',
+        status,
+        adminId,
+        resolutionNotes
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update ticket status');
+    }
+    
+    return await response.json();
   },
 };
