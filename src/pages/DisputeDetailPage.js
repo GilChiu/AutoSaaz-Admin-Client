@@ -21,6 +21,10 @@ const DisputeDetailPage = () => {
   const [escalateReason, setEscalateReason] = useState('');
   const [escalateMessage, setEscalateMessage] = useState('');
   
+  // Message input state
+  const [newMessage, setNewMessage] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -86,6 +90,28 @@ const DisputeDetailPage = () => {
       alert('Failed to resolve case: ' + err.message);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) {
+      alert('Please enter a message');
+      return;
+    }
+
+    try {
+      setSendingMessage(true);
+      const userData = localStorage.getItem('userData');
+      const adminId = userData ? JSON.parse(userData).id : null;
+      
+      await apiService.addDisputeMessage(id, newMessage, 'admin', adminId);
+      setNewMessage('');
+      await fetchDisputeDetail();
+    } catch (err) {
+      console.error('Error sending message:', err);
+      alert('Failed to send message: ' + err.message);
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -208,7 +234,7 @@ const DisputeDetailPage = () => {
         <div className="flex items-start justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-xl font-bold text-gray-900">Case #{dispute.id}</h2>
+              <h2 className="text-xl font-bold text-gray-900">Case #{dispute.code}</h2>
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(dispute.status)}`}>
                 {formatStatus(dispute.status)}
               </span>
@@ -267,7 +293,7 @@ const DisputeDetailPage = () => {
       {/* Conversation Thread */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Conversation</h3>
-        <div className="space-y-4">
+        <div className="space-y-4 mb-6">
           {conversation && conversation.length > 0 ? (
             conversation.map((msg, idx) => (
               <div key={idx} className="border-l-4 border-gray-200 pl-4">
@@ -283,6 +309,29 @@ const DisputeDetailPage = () => {
           ) : (
             <p className="text-gray-500 text-sm">No messages yet.</p>
           )}
+        </div>
+
+        {/* Message Input */}
+        <div className="border-t border-gray-200 pt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Type your message
+          </label>
+          <textarea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="w-full border border-gray-300 rounded-md p-3 text-sm resize-none"
+            rows="3"
+          />
+          <div className="flex justify-end mt-3">
+            <button
+              onClick={handleSendMessage}
+              disabled={sendingMessage || !newMessage.trim()}
+              className="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {sendingMessage ? 'Sending...' : 'Send'}
+            </button>
+          </div>
         </div>
       </div>
 
