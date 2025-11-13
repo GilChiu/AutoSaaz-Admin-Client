@@ -361,6 +361,94 @@ export const apiService = {
     });
   },
 
+  // Payments
+  getPayments: async (params = {}) => {
+    const { page = 1, limit = 10, search = '', status = '', type = '' } = params;
+    const queryParams = new URLSearchParams();
+    if (page) queryParams.append('page', page);
+    if (limit) queryParams.append('limit', limit);
+    if (search) queryParams.append('search', search);
+    if (status) queryParams.append('status', status);
+    if (type) queryParams.append('type', type);
+    
+    const response = await fetch(`${API_BASE_URL}/payments?${queryParams}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch payments');
+    }
+    
+    return await response.json();
+  },
+
+  getPaymentDetail: async (transactionId) => {
+    const response = await fetch(`${API_BASE_URL}/payment-detail/${transactionId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch payment details');
+    }
+    
+    return await response.json();
+  },
+
+  releasePayment: async (transactionId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/payments/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'release',
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to release payment');
+    }
+    
+    return await response.json();
+  },
+
+  flagPayment: async (transactionId, reason, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/payments/${transactionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'flag',
+        reason,
+        adminId
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to flag payment');
+    }
+    
+    return await response.json();
+  },
+
   // Dashboard Stats
   getDashboardStats: async () => {
     return apiRequest('/dashboard/stats');
