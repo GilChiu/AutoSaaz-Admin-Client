@@ -1,54 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit2 } from 'lucide-react';
-
-const initialServices = [
-  { service: 'Oil Change', basePrice: '249.99 AED', duration: '30 min', bookings: '1,234', status: 'Active', commission: '5%' },
-  { service: 'Brake Repair', basePrice: '299.99 AED', duration: '120 min', bookings: '567', status: 'Active', commission: '7%' },
-  { service: 'Tire Rotation', basePrice: '299.99 AED', duration: '45 min', bookings: '234', status: 'Active', commission: '10%' },
-];
-
-const servicesCatalog = ['Oil Change', 'Brake Repair', 'Tire Rotation', 'Engine Diagnostic', 'AC Service'];
+import { getAllGaragesWithServices, setServiceCommission } from '../services/serviceCommissions.service';
 
 const Badge = ({ children }) => (
   <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">{children}</span>
 );
 
-const Modal = ({ open, onClose, onConfirm }) => {
-  const [selected, setSelected] = useState('');
+const Modal = ({ open, onClose, onConfirm, selectedService }) => {
   const [commission, setCommission] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (selectedService && open) {
+      setCommission(selectedService.commissionPercentage?.toString() || '');
+    }
+  }, [selectedService, open]);
+
+  const handleConfirm = async () => {
+    if (!commission || !selectedService) {
+      onClose();
+      return;
+    }
+    setIsSaving(true);
+    await onConfirm(selectedService.id, commission);
+    setIsSaving(false);
+  };
 
   if (!open) return null;
+  
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg w-[680px] max-w-[92vw] p-6">
         <div className="flex items-start justify-between">
-          <h3 className="text-2xl font-semibold text-gray-900">Add Service Commission</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          <h3 className="text-2xl font-semibold text-gray-900">
+            {selectedService ? 'Edit Service Commission' : 'Add Service Commission'}
+          </h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700" disabled={isSaving}>✕</button>
         </div>
         <div className="mt-6 space-y-4">
           <div>
             <div className="text-gray-600 mb-1">Service</div>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400" value={selected} onChange={(e)=>setSelected(e.target.value)}>
-              <option value="">Select Service</option>
-              {servicesCatalog.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <div className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-700">
+              {selectedService?.serviceName || 'No service selected'}
+            </div>
           </div>
           <div>
             <div className="text-gray-600 mb-1">Commission %</div>
-            <input className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="Enter Commission In Service" value={commission} onChange={(e)=>setCommission(e.target.value)} />
+            <input 
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400" 
+              placeholder="Enter Commission Percentage (0-100)" 
+              value={commission} 
+              onChange={(e) => setCommission(e.target.value)}
+              disabled={isSaving}
+            />
           </div>
         </div>
         <div className="mt-8 flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-100 text-gray-700">Cancel</button>
-          <button onClick={() => onConfirm(selected, commission)} className="px-5 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white">Confirm</button>
-        </div>
-        <div className="mt-6 border-t pt-4">
-          <div className="text-sm text-gray-500 mb-2">Type</div>
-          <div className="bg-white rounded-md border border-gray-200 p-4 space-y-2 max-h-48 overflow-auto">
-            {servicesCatalog.map(s => (
-              <div key={s} className="text-gray-800">{s}</div>
-            ))}
-          </div>
+          <button 
+            onClick={onClose} 
+            className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
+            disabled={isSaving}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleConfirm} 
+            className="px-5 py-2 rounded-md bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-400"
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Confirm'}
+          </button>
         </div>
       </div>
     </div>
@@ -56,66 +81,212 @@ const Modal = ({ open, onClose, onConfirm }) => {
 };
 
 const ContentServiceSettingsPage = () => {
-  const [rows, setRows] = useState(initialServices);
+  const [garages, setGarages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
-  // TODO: Replace with real-time garage name from backend once available
-  const [garageName] = useState('AAA Auto Garage');
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedGarageId, setSelectedGarageId] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const onConfirm = (service, commission) => {
-    if (!service || !commission) { setOpen(false); return; }
-    setRows(prev => prev.map(r => r.service === service ? { ...r, commission: commission.endsWith('%') ? commission : `${commission}%` } : r));
-    setOpen(false);
+  // Load garages with services on mount
+  useEffect(() => {
+    loadGarages();
+  }, []);
+
+  const loadGarages = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getAllGaragesWithServices();
+      
+      if (response.success && response.data?.garages) {
+        setGarages(response.data.garages);
+      } else {
+        throw new Error('Failed to load garages');
+      }
+    } catch (err) {
+      console.error('Error loading garages:', err);
+      setError(err.message || 'Failed to load garages');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleEditCommission = (garageId, service) => {
+    setSelectedGarageId(garageId);
+    setSelectedService(service);
+    setOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpen(false);
+    setSelectedService(null);
+    setSelectedGarageId(null);
+  };
+
+  const handleConfirmCommission = async (serviceId, commissionPercentage) => {
+    try {
+      setSaving(true);
+      const percentage = parseFloat(commissionPercentage);
+      
+      if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+        alert('Commission must be between 0 and 100');
+        return;
+      }
+
+      const response = await setServiceCommission(serviceId, percentage);
+      
+      if (response.success) {
+        // Update local state
+        setGarages(prevGarages => 
+          prevGarages.map(garage => {
+            if (garage.garageId === selectedGarageId) {
+              return {
+                ...garage,
+                services: garage.services.map(service => 
+                  service.id === serviceId
+                    ? {
+                        ...service,
+                        commission: `${percentage}%`,
+                        commissionPercentage: percentage,
+                      }
+                    : service
+                ),
+              };
+            }
+            return garage;
+          })
+        );
+        handleCloseModal();
+      } else {
+        throw new Error(response.message || 'Failed to set commission');
+      }
+    } catch (err) {
+      console.error('Error setting commission:', err);
+      alert(err.message || 'Failed to set commission');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Content, Notification & CMS Controls</h1>
+        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <div className="text-gray-600">Loading garages and services...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Content, Notification & CMS Controls</h1>
+        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+          <div className="text-red-600 mb-4">Error: {error}</div>
+          <button 
+            onClick={loadGarages}
+            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Content, Notification & CMS Controls</h1>
 
       <div className="bg-white border border-gray-200 rounded-lg">
-        <div className="px-5 pt-5">
-          <h2 className="text-lg font-semibold text-gray-800">Service Setting</h2>
-          <div className="mt-4 bg-white border border-gray-200 rounded-lg">
-            <div className="flex items-center justify-between p-4">
-              <div className="text-gray-800 font-semibold">{garageName}</div>
-              <button onClick={() => setOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-md">+ Add Commission</button>
+        <div className="px-5 pt-5 pb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Service Setting</h2>
+          
+          {garages.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No garages found
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Service</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Base Price</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Duration</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bookings</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Commission</th>
-                    <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {rows.map(r => (
-                    <tr key={r.service} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 text-sm text-gray-800">{r.service}</td>
-                      <td className="px-5 py-3 text-sm text-gray-800">{r.basePrice}</td>
-                      <td className="px-5 py-3 text-sm text-gray-800">{r.duration}</td>
-                      <td className="px-5 py-3 text-sm text-gray-800">{r.bookings}</td>
-                      <td className="px-5 py-3 text-sm text-gray-800"><Badge>{r.status}</Badge></td>
-                      <td className="px-5 py-3 text-sm text-gray-800">{r.commission}</td>
-                      <td className="px-5 py-3 text-right">
-                        <button onClick={() => setOpen(true)} className="inline-flex items-center text-indigo-600 hover:text-indigo-700">
-                          <Edit2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          ) : (
+            <div className="space-y-6">
+              {garages.map((garage) => (
+                <div key={garage.garageId} className="bg-white border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div>
+                      <div className="text-gray-800 font-semibold">{garage.garageName}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {garage.email}
+                        {garage.phoneNumber && ` • ${garage.phoneNumber}`}
+                        {garage.location && ` • ${garage.location}`}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {garage.serviceCount} service{garage.serviceCount !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+
+                  {garage.services.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500">
+                      No services available for this garage
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Service</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Base Price</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Duration</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bookings</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Commission</th>
+                            <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {garage.services.map((service) => (
+                            <tr key={service.id} className="hover:bg-gray-50">
+                              <td className="px-5 py-3 text-sm text-gray-800">{service.serviceName}</td>
+                              <td className="px-5 py-3 text-sm text-gray-800">{service.basePrice}</td>
+                              <td className="px-5 py-3 text-sm text-gray-800">{service.duration}</td>
+                              <td className="px-5 py-3 text-sm text-gray-800">{service.bookings}</td>
+                              <td className="px-5 py-3 text-sm text-gray-800">
+                                <Badge>{service.status}</Badge>
+                              </td>
+                              <td className="px-5 py-3 text-sm text-gray-800 font-medium">
+                                {service.commission}
+                              </td>
+                              <td className="px-5 py-3 text-right">
+                                <button 
+                                  onClick={() => handleEditCommission(garage.garageId, service)}
+                                  className="inline-flex items-center text-indigo-600 hover:text-indigo-700"
+                                  title="Edit commission"
+                                >
+                                  <Edit2 size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} onConfirm={onConfirm} />
+      <Modal 
+        open={open} 
+        onClose={handleCloseModal} 
+        onConfirm={handleConfirmCommission}
+        selectedService={selectedService}
+      />
     </div>
   );
 };
