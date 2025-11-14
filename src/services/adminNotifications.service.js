@@ -1,4 +1,17 @@
+import { SUPABASE_ANON_KEY } from '../config/supabase';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://lblcjyeiwgyanadssqac.supabase.co/functions/v1';
+
+/**
+ * Get authentication token from localStorage
+ * Checks multiple possible token keys in order of preference
+ */
+const getAuthToken = () => {
+  return localStorage.getItem('authToken') || 
+         localStorage.getItem('accessToken') || 
+         localStorage.getItem('token') ||
+         null;
+};
 
 /**
  * Admin Notifications Service
@@ -9,11 +22,17 @@ class AdminNotificationsService {
    * Get authorization headers with JWT token
    */
   getHeaders() {
-    const token = localStorage.getItem('access_token');
-    return {
+    const token = getAuthToken();
+    const headers = {
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json',
-      'x-access-token': token || '',
     };
+    
+    if (token) {
+      headers['x-access-token'] = token;
+    }
+    
+    return headers;
   }
 
   /**
