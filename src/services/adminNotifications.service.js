@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://lblcjyeiwgyanadssqac.supabase.co/functions/v1';
 
 /**
@@ -19,6 +17,17 @@ class AdminNotificationsService {
   }
 
   /**
+   * Handle fetch response
+   */
+  async handleResponse(response) {
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw error;
+    }
+    return response.json();
+  }
+
+  /**
    * Get all notifications for admin
    * @param {Object} params - Query parameters
    * @param {number} params.limit - Maximum number of notifications to return
@@ -32,15 +41,18 @@ class AdminNotificationsService {
       if (params.limit) queryParams.append('limit', params.limit.toString());
       if (params.unread) queryParams.append('unread', 'true');
 
-      const response = await axios.get(
+      const response = await fetch(
         `${API_BASE_URL}/admin-notifications?${queryParams.toString()}`,
-        { headers: this.getHeaders() }
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
       );
 
-      return response.data;
+      return this.handleResponse(response);
     } catch (error) {
       console.error('Error fetching admin notifications:', error);
-      throw error.response?.data || error;
+      throw error;
     }
   }
 
@@ -50,15 +62,18 @@ class AdminNotificationsService {
    */
   async getUnreadCount() {
     try {
-      const response = await axios.get(
+      const response = await fetch(
         `${API_BASE_URL}/admin-notifications/unread-count`,
-        { headers: this.getHeaders() }
+        {
+          method: 'GET',
+          headers: this.getHeaders(),
+        }
       );
 
-      return response.data;
+      return this.handleResponse(response);
     } catch (error) {
       console.error('Error fetching unread count:', error);
-      throw error.response?.data || error;
+      throw error;
     }
   }
 
@@ -69,16 +84,19 @@ class AdminNotificationsService {
    */
   async markAsRead(id) {
     try {
-      const response = await axios.post(
+      const response = await fetch(
         `${API_BASE_URL}/admin-notifications/${id}/read`,
-        {},
-        { headers: this.getHeaders() }
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({}),
+        }
       );
 
-      return response.data;
+      return this.handleResponse(response);
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      throw error.response?.data || error;
+      throw error;
     }
   }
 
@@ -88,16 +106,19 @@ class AdminNotificationsService {
    */
   async markAllAsRead() {
     try {
-      const response = await axios.post(
+      const response = await fetch(
         `${API_BASE_URL}/admin-notifications/read-all`,
-        {},
-        { headers: this.getHeaders() }
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          body: JSON.stringify({}),
+        }
       );
 
-      return response.data;
+      return this.handleResponse(response);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      throw error.response?.data || error;
+      throw error;
     }
   }
 
