@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Search, FileText, Eye, EyeOff, Globe, Calendar } from 'lucide-react';
 import cmsPoliciesService from '../services/cmsPolicies.service';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const ContentCMSPoliciesPage = () => {
   const [policies, setPolicies] = useState([]);
@@ -12,6 +13,7 @@ const ContentCMSPoliciesPage = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [publishedFilter, setPublishedFilter] = useState('all');
   const [languageFilter, setLanguageFilter] = useState('all');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, policy: null });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -57,7 +59,7 @@ const ContentCMSPoliciesPage = () => {
       resetForm();
       fetchPolicies();
     } catch (err) {
-      alert(err.message || 'Operation failed');
+      setError(err.message || 'Operation failed');
     }
   };
 
@@ -66,19 +68,24 @@ const ContentCMSPoliciesPage = () => {
       await cmsPoliciesService.togglePublish(policy.id, !policy.is_published);
       fetchPolicies();
     } catch (err) {
-      alert(err.message || 'Failed to toggle publish status');
+      setError(err.message || 'Failed to toggle publish status');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this policy?')) {
-      return;
-    }
+  const handleDelete = async (policy) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete',
+      policy,
+    });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await cmsPoliciesService.deletePolicy(id);
+      await cmsPoliciesService.deletePolicy(confirmModal.policy.id);
       fetchPolicies();
     } catch (err) {
-      alert(err.message || 'Failed to delete policy');
+      setError(err.message || 'Failed to delete policy');
     }
   };
 
@@ -350,13 +357,13 @@ const ContentCMSPoliciesPage = () => {
                         </button>
                         <button
                           onClick={() => handleEdit(policy)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Edit"
-                        >
-                          <Edit size={18} />
-                        </button>
                         <button
-                          onClick={() => handleDelete(policy.id)}
+                          onClick={() => handleDelete(policy)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>={() => handleDelete(policy.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded"
                           title="Delete"
                         >
@@ -371,6 +378,19 @@ const ContentCMSPoliciesPage = () => {
           </table>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen && confirmModal.type === 'delete'}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, policy: null })}
+        onConfirm={confirmDelete}
+        title="Delete Policy"
+        message={`Are you sure you want to delete "${confirmModal.policy?.title}"? This action cannot be undone and will remove all content and history.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isDestructive={true}
+      />
 
       {/* Create/Edit Modal */}
       {showModal && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Send, Edit, Trash2, Search, Filter, Bell, Users, Calendar } from 'lucide-react';
 import pushNotificationsService from '../services/pushNotifications.service';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const ContentPushNotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
@@ -11,6 +12,7 @@ const ContentPushNotificationsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [targetFilter, setTargetFilter] = useState('all');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, notification: null });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -57,31 +59,41 @@ const ContentPushNotificationsPage = () => {
       resetForm();
       fetchNotifications();
     } catch (err) {
-      alert(err.message || 'Operation failed');
+      setError(err.message || 'Operation failed');
     }
   };
 
   const handleSendNotification = async (notification) => {
-    if (!window.confirm('Are you sure you want to send this notification? This action cannot be undone.')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      type: 'send',
+      notification,
+    });
+  };
+
+  const confirmSendNotification = async () => {
     try {
-      await pushNotificationsService.sendNotification(notification.id);
+      await pushNotificationsService.sendNotification(confirmModal.notification.id);
       fetchNotifications();
     } catch (err) {
-      alert(err.message || 'Failed to send notification');
+      setError(err.message || 'Failed to send notification');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this notification?')) {
-      return;
-    }
+  const handleDelete = async (notification) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete',
+      notification,
+    });
+  };
+
+  const confirmDelete = async () => {
     try {
-      await pushNotificationsService.deleteNotification(id);
+      await pushNotificationsService.deleteNotification(confirmModal.notification.id);
       fetchNotifications();
     } catch (err) {
-      alert(err.message || 'Failed to delete notification');
+      setError(err.message || 'Failed to delete notification');
     }
   };
 
@@ -329,7 +341,7 @@ const ContentPushNotificationsPage = () => {
                           <Edit size={18} />
                         </button>
                         <button
-                          onClick={() => handleDelete(notification.id)}
+                          onClick={() => handleDelete(notification)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded"
                           title="Delete"
                         >
@@ -344,6 +356,30 @@ const ContentPushNotificationsPage = () => {
           </table>
         </div>
       </div>
+
+      {/* Confirmation Modals */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen && confirmModal.type === 'send'}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, notification: null })}
+        onConfirm={confirmSendNotification}
+        title="Send Notification"
+        message={`Are you sure you want to send "${confirmModal.notification?.title}"? This action cannot be undone and will immediately notify all target users.`}
+        confirmText="Send Now"
+        cancelText="Cancel"
+        type="warning"
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen && confirmModal.type === 'delete'}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, notification: null })}
+        onConfirm={confirmDelete}
+        title="Delete Notification"
+        message={`Are you sure you want to delete "${confirmModal.notification?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isDestructive={true}
+      />
 
       {/* Create/Edit Modal */}
       {showModal && (
