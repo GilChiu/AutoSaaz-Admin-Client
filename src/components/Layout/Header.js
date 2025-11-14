@@ -1,6 +1,7 @@
 import React from "react";
-import { Bell, User } from "lucide-react";
+import { User } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import AdminNotificationDropdown from "../common/AdminNotificationDropdown";
 
 const Header = () => {
   const { user } = useAuth();
@@ -15,12 +16,7 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
+          <AdminNotificationDropdown />
           
           <div className="flex items-center space-x-3">
             <div className="text-right">

@@ -23,6 +23,7 @@ import ContentPushNotificationsPage from "./pages/ContentPushNotificationsPage";
 import ContentAppBannersPage from "./pages/ContentAppBannersPage";
 import ContentCMSPoliciesPage from "./pages/ContentCMSPoliciesPage";
 import ContentServiceSettingsPage from "./pages/ContentServiceSettingsPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 
 const ProtectedRoute = ({ children }) => {
@@ -66,6 +67,7 @@ const AppContent = () => {
               <Route path="/payments/:id" element={<PaymentDetailPage />} />
               <Route path="/disputes" element={<DisputesPage />} />
               <Route path="/disputes/:id" element={<DisputeDetailPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/support" element={<Navigate to="/support/users" />} />
               <Route path="/support/users" element={<SupportUserTicketsPage />} />
               <Route path="/support/users/:id" element={<SupportUserChatPage />} />
