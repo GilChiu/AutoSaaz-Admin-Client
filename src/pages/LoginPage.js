@@ -137,11 +137,6 @@ const LoginPage = () => {
                 {loading ? 'Logging in...' : 'Log in'}
               </button>
             </form>
-            <div className="mt-6 text-center">
-              <div className="text-sm text-gray-600">
-                Demo credentials: <span className="font-mono">admin@autosaaz.com</span> / <span className="font-mono">admin123</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
