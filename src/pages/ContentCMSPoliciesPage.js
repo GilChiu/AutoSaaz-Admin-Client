@@ -357,13 +357,13 @@ const ContentCMSPoliciesPage = () => {
                         </button>
                         <button
                           onClick={() => handleEdit(policy)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Edit"
+                        >
+                          <Edit size={18} />
+                        </button>
                         <button
                           onClick={() => handleDelete(policy)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>={() => handleDelete(policy.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded"
                           title="Delete"
                         >
