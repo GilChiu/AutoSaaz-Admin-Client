@@ -25,6 +25,112 @@ const DashboardAnalyticsPage = () => {
     fetchAnalyticsData();
   }, [fetchAnalyticsData]);
 
+  // Memoized helper function for percentage formatting - MUST be at top level
+  const formatPercentage = useCallback((growth) => {
+    if (typeof growth !== 'number') {
+      growth = parseFloat(growth) || 0;
+    }
+    const sign = growth >= 0 ? '+' : '';
+    return `${sign}${growth.toFixed(1)}%`;
+  }, []);
+
+  // Memoized cards array - MUST be at top level before any returns
+  const cards = useMemo(() => {
+    if (!analyticsData) return [];
+    
+    return [
+      {
+        label: analyticsData.totalUsers.label,
+        value: analyticsData.totalUsers.formatted,
+        change: formatPercentage(analyticsData.totalUsers.growth) + ' from last month',
+        growth: analyticsData.totalUsers.growth,
+        symbol: false,
+      },
+      {
+        label: analyticsData.totalGarages.label,
+        value: analyticsData.totalGarages.formatted,
+        change: formatPercentage(analyticsData.totalGarages.growth) + ' from last month',
+        growth: analyticsData.totalGarages.growth,
+        symbol: false,
+      },
+      {
+        label: analyticsData.totalBookings.label,
+        value: analyticsData.totalBookings.formatted,
+        change: formatPercentage(analyticsData.totalBookings.growth) + ' from last month',
+        growth: analyticsData.totalBookings.growth,
+        symbol: false,
+      },
+      {
+        label: analyticsData.totalRevenue.label,
+        value: analyticsData.totalRevenue.formatted,
+        change: formatPercentage(analyticsData.totalRevenue.growth) + ' from last month',
+        growth: analyticsData.totalRevenue.growth,
+        symbol: true,
+      },
+      {
+        label: analyticsData.activeBookings.label,
+        value: analyticsData.activeBookings.formatted,
+        change: analyticsData.activeBookings.period,
+        growth: null,
+        symbol: false,
+      },
+      {
+        label: analyticsData.averageBookingValue.label,
+        value: analyticsData.averageBookingValue.formatted,
+        change: '',
+        growth: null,
+        symbol: true,
+      },
+      {
+        label: analyticsData.escrowBalance.label,
+        value: analyticsData.escrowBalance.formatted,
+        change: '',
+        growth: null,
+        symbol: true,
+      },
+      {
+        label: analyticsData.pendingDisputes.label,
+        value: analyticsData.pendingDisputes.formatted,
+        change: '',
+        growth: null,
+        symbol: false,
+      }
+    ];
+  }, [analyticsData, formatPercentage]);
+
+  // Memoized AnalyticsCard component to prevent unnecessary re-renders
+  const AnalyticsCard = React.memo(({ card }) => (
+    <div className="bg-white border border-gray-200 rounded-md p-4">
+      <div className="text-[11px] font-medium text-gray-500 mb-1">{card.label}</div>
+      <div className="text-base font-semibold text-gray-800">
+        {card.symbol ? (
+          <span className="inline-flex items-center gap-1">
+            <DirhamIcon />
+            {card.value}
+          </span>
+        ) : (
+          card.value
+        )}
+      </div>
+      {card.change && (
+        <div className={`mt-1 text-[11px] font-medium flex items-center gap-1 ${
+          card.growth !== null && card.growth >= 0 ? 'text-green-600' : 
+          card.growth !== null && card.growth < 0 ? 'text-red-600' : 
+          'text-gray-600'
+        }`}>
+          {card.growth !== null && (
+            <span className={`inline-block px-1.5 py-0.5 rounded ${
+              card.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+              {card.growth >= 0 ? '↗' : '↘'}
+            </span>
+          )}
+          {card.change}
+        </div>
+      )}
+    </div>
+  ));
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -65,15 +171,6 @@ const DashboardAnalyticsPage = () => {
     );
   }
 
-  // Memoized helper function for percentage formatting
-  const formatPercentage = useCallback((growth) => {
-    if (typeof growth !== 'number') {
-      growth = parseFloat(growth) || 0;
-    }
-    const sign = growth >= 0 ? '+' : '';
-    return `${sign}${growth.toFixed(1)}%`;
-  }, []);
-
   if (!analyticsData) {
     return (
       <div className="space-y-6">
@@ -84,99 +181,6 @@ const DashboardAnalyticsPage = () => {
       </div>
     );
   }
-
-  // Memoized cards array to prevent recreation on every render
-  const cards = useMemo(() => [
-    {
-      label: analyticsData.totalUsers.label,
-      value: analyticsData.totalUsers.formatted,
-      change: formatPercentage(analyticsData.totalUsers.growth) + ' from last month',
-      growth: analyticsData.totalUsers.growth,
-      symbol: false,
-    },
-    {
-      label: analyticsData.totalGarages.label,
-      value: analyticsData.totalGarages.formatted,
-      change: formatPercentage(analyticsData.totalGarages.growth) + ' from last month',
-      growth: analyticsData.totalGarages.growth,
-      symbol: false,
-    },
-    {
-      label: analyticsData.totalBookings.label,
-      value: analyticsData.totalBookings.formatted,
-      change: formatPercentage(analyticsData.totalBookings.growth) + ' from last month',
-      growth: analyticsData.totalBookings.growth,
-      symbol: false,
-    },
-    {
-      label: analyticsData.totalRevenue.label,
-      value: analyticsData.totalRevenue.formatted,
-      change: formatPercentage(analyticsData.totalRevenue.growth) + ' from last month',
-      growth: analyticsData.totalRevenue.growth,
-      symbol: true,
-    },
-    {
-      label: analyticsData.activeBookings.label,
-      value: analyticsData.activeBookings.formatted,
-      change: analyticsData.activeBookings.period,
-      growth: null,
-      symbol: false,
-    },
-    {
-      label: analyticsData.averageBookingValue.label,
-      value: analyticsData.averageBookingValue.formatted,
-      change: '',
-      growth: null,
-      symbol: true,
-    },
-    {
-      label: analyticsData.escrowBalance.label,
-      value: analyticsData.escrowBalance.formatted,
-      change: '',
-      growth: null,
-      symbol: true,
-    },
-    {
-      label: analyticsData.pendingDisputes.label,
-      value: analyticsData.pendingDisputes.formatted,
-      change: '',
-      growth: null,
-      symbol: false,
-    }
-  ], [analyticsData, formatPercentage]);
-
-  // Memoized AnalyticsCard component to prevent unnecessary re-renders
-  const AnalyticsCard = React.memo(({ card }) => (
-    <div className="bg-white border border-gray-200 rounded-md p-4">
-      <div className="text-[11px] font-medium text-gray-500 mb-1">{card.label}</div>
-      <div className="text-base font-semibold text-gray-800">
-        {card.symbol ? (
-          <span className="inline-flex items-center gap-1">
-            <DirhamIcon />
-            {card.value}
-          </span>
-        ) : (
-          card.value
-        )}
-      </div>
-      {card.change && (
-        <div className={`mt-1 text-[11px] font-medium flex items-center gap-1 ${
-          card.growth !== null && card.growth >= 0 ? 'text-green-600' : 
-          card.growth !== null && card.growth < 0 ? 'text-red-600' : 
-          'text-gray-600'
-        }`}>
-          {card.growth !== null && (
-            <span className={`inline-block px-1.5 py-0.5 rounded ${
-              card.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
-              {card.growth >= 0 ? '↗' : '↘'}
-            </span>
-          )}
-          {card.change}
-        </div>
-      )}
-    </div>
-  ));
 
   return (
     <div className="space-y-6">
