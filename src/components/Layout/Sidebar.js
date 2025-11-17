@@ -54,9 +54,9 @@ const Sidebar = () => {
   const [openGroups, setOpenGroups] = useState(() => {
     const init = {};
     if (location.pathname.startsWith(inspectionGroup.basePath)) init[inspectionGroup.label] = true;
-    if (location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard/")) init["Dashboard"] = true;
-  if (location.pathname === "/orders" || location.pathname.startsWith("/orders/")) init["Order Management"] = true;
-  if (location.pathname === "/support" || location.pathname.startsWith("/support/")) init["Support"] = true;
+    if (location.pathname.startsWith("/dashboard")) init["Dashboard"] = true;
+    if (location.pathname.startsWith("/orders")) init["Order Management"] = true;
+    if (location.pathname.startsWith("/support")) init["Support"] = true;
     return init;
   });
 

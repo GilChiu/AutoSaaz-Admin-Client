@@ -60,15 +60,15 @@ const AppContent = () => {
       <Routes>
         <Route 
           path="/login" 
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} 
+          element={isAuthenticated ? <Navigate to="/dashboard/overview" /> : <LoginPage />} 
         />
         <Route path="/*" element={
           <ProtectedRoute>
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/" element={<Navigate to="/dashboard/overview" />} />
+                  <Route path="/dashboard" element={<Navigate to="/dashboard/overview" />} />
                   <Route path="/dashboard/overview" element={<DashboardPage />} />
                   <Route path="/dashboard/analytics" element={<DashboardAnalyticsPage />} />
                   <Route path="/users" element={<UserManagementPage />} />
