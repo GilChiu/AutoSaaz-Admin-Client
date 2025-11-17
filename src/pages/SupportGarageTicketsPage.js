@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { formatDateTime } from '../utils/dateFormatter';
 
 const SupportGarageTicketsPage = () => {
   const [query, setQuery] = useState('');
@@ -121,7 +122,7 @@ const SupportGarageTicketsPage = () => {
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Garage Name</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Priority</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Age</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ticket Date</th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Subject</th>
                   <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
                 </tr>
@@ -141,7 +142,7 @@ const SupportGarageTicketsPage = () => {
                         {formatStatus(t.status)}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-sm text-gray-600">{t.age}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{formatDateTime(t.createdAt)}</td>
                     <td className="px-5 py-3 text-sm text-gray-800 max-w-[360px] truncate" title={t.subject}>{t.subject}</td>
                     <td className="px-5 py-3 text-right">
                       <button 
