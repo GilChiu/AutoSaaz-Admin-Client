@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import debounce from '../utils/debounce';
+import { formatDateTime } from '../utils/dateFormatter';
 
 const StatusBadge = ({ status }) => {
   const cls = status === 'pending' ? 'bg-yellow-100 text-yellow-700' : status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
@@ -10,7 +11,24 @@ const StatusBadge = ({ status }) => {
 };
 
 // Memoized OrderCard component
-const OrderCard = React.memo(({ order, onAssign, onComplete }) => (
+const OrderCard = React.memo(({ order, onAssign, onComplete }) => {
+  // Determine which timestamp to show based on status
+  const getStatusTimestamp = () => {
+    if (order.status === 'completed' && order.completedAt) {
+      return { label: 'Completed', time: formatDateTime(order.completedAt) };
+    }
+    if (order.status === 'in_progress' && order.assignedAt) {
+      return { label: 'Assigned', time: formatDateTime(order.assignedAt) };
+    }
+    if (order.createdAt) {
+      return { label: 'Created', time: formatDateTime(order.createdAt) };
+    }
+    return { label: 'Status', time: 'N/A' };
+  };
+  
+  const statusTimestamp = getStatusTimestamp();
+  
+  return (
   <div className="bg-white border border-gray-200 rounded-lg p-5">
     <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
       <div>
@@ -39,9 +57,15 @@ const OrderCard = React.memo(({ order, onAssign, onComplete }) => (
       </div>
     </div>
     <div className="mt-4 flex items-center justify-between">
-      <div className="text-xs text-gray-600">
-        <div className="font-medium">Payment Status</div>
-        <div>{formatPaymentStatus(order.paymentStatus)}</div>
+      <div className="flex gap-6">
+        <div className="text-xs text-gray-600">
+          <div className="font-medium">Payment Status</div>
+          <div>{formatPaymentStatus(order.paymentStatus)}</div>
+        </div>
+        <div className="text-xs text-gray-600">
+          <div className="font-medium">{statusTimestamp.label} At</div>
+          <div className="text-gray-800">{statusTimestamp.time}</div>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <StatusBadge status={order.status} />
@@ -65,7 +89,8 @@ const OrderCard = React.memo(({ order, onAssign, onComplete }) => (
       </div>
     </div>
   </div>
-));
+);
+});
 
 OrderCard.displayName = 'OrderCard';
 
