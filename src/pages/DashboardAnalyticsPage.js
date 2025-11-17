@@ -1,21 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import DirhamIcon from "../components/DirhamIcon";
-import analyticsService from "../services/analytics.service";
+import { apiService } from "../services/apiService";
 
 const DashboardAnalyticsPage = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, []);
-
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await analyticsService.getAnalyticsStats();
+      const data = await apiService.getAnalyticsStats();
       setAnalyticsData(data);
     } catch (err) {
       console.error('Failed to load analytics:', err);
@@ -23,7 +19,11 @@ const DashboardAnalyticsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
 
   if (loading) {
     return (
@@ -65,6 +65,15 @@ const DashboardAnalyticsPage = () => {
     );
   }
 
+  // Memoized helper function for percentage formatting
+  const formatPercentage = useCallback((growth) => {
+    if (typeof growth !== 'number') {
+      growth = parseFloat(growth) || 0;
+    }
+    const sign = growth >= 0 ? '+' : '';
+    return `${sign}${growth.toFixed(1)}%`;
+  }, []);
+
   if (!analyticsData) {
     return (
       <div className="space-y-6">
@@ -76,32 +85,33 @@ const DashboardAnalyticsPage = () => {
     );
   }
 
-  const cards = [
+  // Memoized cards array to prevent recreation on every render
+  const cards = useMemo(() => [
     {
       label: analyticsData.totalUsers.label,
       value: analyticsData.totalUsers.formatted,
-      change: analyticsService.formatPercentage(analyticsData.totalUsers.growth) + ' from last month',
+      change: formatPercentage(analyticsData.totalUsers.growth) + ' from last month',
       growth: analyticsData.totalUsers.growth,
       symbol: false,
     },
     {
       label: analyticsData.totalGarages.label,
       value: analyticsData.totalGarages.formatted,
-      change: analyticsService.formatPercentage(analyticsData.totalGarages.growth) + ' from last month',
+      change: formatPercentage(analyticsData.totalGarages.growth) + ' from last month',
       growth: analyticsData.totalGarages.growth,
       symbol: false,
     },
     {
       label: analyticsData.totalBookings.label,
       value: analyticsData.totalBookings.formatted,
-      change: analyticsService.formatPercentage(analyticsData.totalBookings.growth) + ' from last month',
+      change: formatPercentage(analyticsData.totalBookings.growth) + ' from last month',
       growth: analyticsData.totalBookings.growth,
       symbol: false,
     },
     {
       label: analyticsData.totalRevenue.label,
       value: analyticsData.totalRevenue.formatted,
-      change: analyticsService.formatPercentage(analyticsData.totalRevenue.growth) + ' from last month',
+      change: formatPercentage(analyticsData.totalRevenue.growth) + ' from last month',
       growth: analyticsData.totalRevenue.growth,
       symbol: true,
     },
@@ -133,7 +143,40 @@ const DashboardAnalyticsPage = () => {
       growth: null,
       symbol: false,
     }
-  ];
+  ], [analyticsData, formatPercentage]);
+
+  // Memoized AnalyticsCard component to prevent unnecessary re-renders
+  const AnalyticsCard = React.memo(({ card }) => (
+    <div className="bg-white border border-gray-200 rounded-md p-4">
+      <div className="text-[11px] font-medium text-gray-500 mb-1">{card.label}</div>
+      <div className="text-base font-semibold text-gray-800">
+        {card.symbol ? (
+          <span className="inline-flex items-center gap-1">
+            <DirhamIcon />
+            {card.value}
+          </span>
+        ) : (
+          card.value
+        )}
+      </div>
+      {card.change && (
+        <div className={`mt-1 text-[11px] font-medium flex items-center gap-1 ${
+          card.growth !== null && card.growth >= 0 ? 'text-green-600' : 
+          card.growth !== null && card.growth < 0 ? 'text-red-600' : 
+          'text-gray-600'
+        }`}>
+          {card.growth !== null && (
+            <span className={`inline-block px-1.5 py-0.5 rounded ${
+              card.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+              {card.growth >= 0 ? '↗' : '↘'}
+            </span>
+          )}
+          {card.change}
+        </div>
+      )}
+    </div>
+  ));
 
   return (
     <div className="space-y-6">
@@ -149,35 +192,7 @@ const DashboardAnalyticsPage = () => {
       
       <div className="grid gap-4 md:grid-cols-4 sm:grid-cols-2">
         {cards.map(card => (
-          <div key={card.label} className="bg-white border border-gray-200 rounded-md p-4">
-            <div className="text-[11px] font-medium text-gray-500 mb-1">{card.label}</div>
-            <div className="text-base font-semibold text-gray-800">
-              {card.symbol ? (
-                <span className="inline-flex items-center gap-1">
-                  <DirhamIcon />
-                  {card.value}
-                </span>
-              ) : (
-                card.value
-              )}
-            </div>
-            {card.change && (
-              <div className={`mt-1 text-[11px] font-medium flex items-center gap-1 ${
-                card.growth !== null && card.growth >= 0 ? 'text-green-600' : 
-                card.growth !== null && card.growth < 0 ? 'text-red-600' : 
-                'text-gray-600'
-              }`}>
-                {card.growth !== null && (
-                  <span className={`inline-block px-1.5 py-0.5 rounded ${
-                    card.growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {card.growth >= 0 ? '↗' : '↘'}
-                  </span>
-                )}
-                {card.change}
-              </div>
-            )}
-          </div>
+          <AnalyticsCard key={card.label} card={card} />
         ))}
       </div>
     </div>

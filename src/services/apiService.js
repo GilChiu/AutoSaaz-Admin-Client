@@ -846,6 +846,51 @@ export const apiService = {
     }, `GET ${endpoint}`);
   },
 
+  // Analytics Stats
+  getAnalyticsStats: async () => {
+    const endpoint = '/admin-analytics-stats';
+    
+    // Check cache first
+    const cached = cache.get(endpoint);
+    if (cached) return cached;
+    
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'x-admin-token': token,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please log out and log in again.');
+        }
+        
+        throw new Error(errorData.error || `Failed to fetch analytics stats (${response.status})`);
+      }
+
+      const data = await response.json();
+      
+      // Cache the result
+      cache.set(endpoint, {}, data);
+      
+      return data;
+    }, `GET ${endpoint}`);
+  },
+
   // Support Tickets
   getSupportTickets: async (senderType = null, status = null) => {
     let url = '/support-tickets?';

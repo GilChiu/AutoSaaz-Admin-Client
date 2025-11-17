@@ -11,6 +11,7 @@ const CACHE_CONFIG = {
   // Cache TTLs in milliseconds
   TTL: {
     DASHBOARD_STATS: 2 * 60 * 1000,        // 2 minutes
+    ANALYTICS_STATS: 2 * 60 * 1000,        // 2 minutes
     USER_LIST: 5 * 60 * 1000,              // 5 minutes
     GARAGE_LIST: 5 * 60 * 1000,            // 5 minutes
     ORDER_LIST: 3 * 60 * 1000,             // 3 minutes
@@ -25,6 +26,8 @@ const CACHE_CONFIG = {
   
   // Keys that should use memory cache only (never localStorage)
   MEMORY_ONLY: [
+    'dashboard',
+    'analytics',
     'users',
     'user-detail',
     'garages',
@@ -52,6 +55,7 @@ function generateCacheKey(endpoint, params = {}) {
  * Determine TTL based on endpoint
  */
 function getTTL(endpoint) {
+  if (endpoint.includes('analytics')) return CACHE_CONFIG.TTL.ANALYTICS_STATS;
   if (endpoint.includes('dashboard')) return CACHE_CONFIG.TTL.DASHBOARD_STATS;
   if (endpoint.includes('users') && !endpoint.includes('user-detail')) return CACHE_CONFIG.TTL.USER_LIST;
   if (endpoint.includes('user-detail')) return CACHE_CONFIG.TTL.USER_DETAIL;
