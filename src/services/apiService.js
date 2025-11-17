@@ -809,12 +809,15 @@ export const apiService = {
     const cached = cache.get(endpoint);
     if (cached) return cached;
     
-    const result = await apiRequest(endpoint);
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const result = await apiRequest(endpoint);
+      
+      // Cache the result
+      cache.set(endpoint, {}, result);
+      
+      return result;
+    }, `GET ${endpoint}`);
   },
 
   // Support Tickets
