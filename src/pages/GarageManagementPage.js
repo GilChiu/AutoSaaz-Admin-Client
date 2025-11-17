@@ -1,14 +1,72 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { MoreVertical } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import ConfirmModal from '../components/common/ConfirmModal';
+import debounce from '../utils/debounce';
+
+// Memoized GarageRow component
+const GarageRow = React.memo(({ garage, openMenu, menuRef, menuPosition, onNavigate, onMenuClick, onSuspend, onDelete }) => (
+  <tr key={garage.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => onNavigate(garage.id)}>
+    <td className="px-5 py-4 text-sm font-medium text-gray-900">{garage.name}</td>
+    <td className="px-5 py-4 text-sm text-gray-700">{garage.owner}</td>
+    <td className="px-5 py-4 text-sm text-gray-700">{garage.contact}</td>
+    <td className="px-5 py-4 text-sm text-gray-700">{garage.area}</td>
+    <td className="px-5 py-4 text-sm">
+      <span className={`px-2 py-1 rounded text-xs font-medium ${
+        garage.isSuspended ? 'bg-red-100 text-red-700' :
+        garage.isDeleted ? 'bg-gray-100 text-gray-700' :
+        'bg-green-100 text-green-700'
+      }`}>
+        {garage.status}
+      </span>
+    </td>
+    <td className="px-5 py-4 text-sm text-gray-700">{garage.rating} ★</td>
+    <td className="px-5 py-4 text-right text-sm font-medium relative" ref={openMenu === garage.id ? menuRef : null}>
+      <button
+        onClick={(e) => onMenuClick(e, garage.id)}
+        className="text-gray-400 hover:text-gray-600"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+      {openMenu === garage.id && (
+        <div className={`origin-top-right absolute right-0 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 ${
+          menuPosition === 'top' ? 'bottom-full mb-2' : 'mt-2'
+        }`}>
+          <div className="py-1 text-sm">
+            <button
+              onClick={(e) => { e.stopPropagation(); onNavigate(garage.id); }}
+              className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+            >View Details</button>
+            {!garage.isDeleted && (
+              <button
+                onClick={(e) => onSuspend(garage, e)}
+                className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+              >
+                {garage.isSuspended ? 'Unsuspend Garage' : 'Suspend Garage'}
+              </button>
+            )}
+            {!garage.isDeleted && (
+              <button
+                onClick={(e) => onDelete(garage, e)}
+                className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
+              >Delete Garage</button>
+            )}
+          </div>
+        </div>
+      )}
+    </td>
+  </tr>
+));
+
+GarageRow.displayName = 'GarageRow';
 
 const GarageManagementPage = () => {
   const [garages, setGarages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -57,9 +115,24 @@ const GarageManagementPage = () => {
     fetchGarages();
   }, [fetchGarages]);
 
+  // Debounced search
+  const debouncedSearch = useMemo(
+    () => debounce((value) => {
+      setSearch(value);
+      setPage(1);
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
   const handleSearch = () => {
+    setSearch(searchInput);
     setPage(1);
-    fetchGarages();
   };
 
   const handleKeyPress = (e) => {
@@ -67,6 +140,30 @@ const GarageManagementPage = () => {
       handleSearch();
     }
   };
+
+  // Memoized handlers
+  const handleNavigate = useCallback((garageId) => {
+    setOpenMenu(null);
+    navigate(`/garages/${garageId}`);
+  }, [navigate]);
+
+  const handleMenuClick = useCallback((e, garageId) => {
+    e.stopPropagation();
+    
+    // Calculate if menu should open upwards or downwards
+    const buttonRect = e.currentTarget.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const menuHeight = 120;
+    
+    if (spaceBelow < menuHeight && buttonRect.top > menuHeight) {
+      setMenuPosition('top');
+    } else {
+      setMenuPosition('bottom');
+    }
+    
+    setOpenMenu(m => m === garageId ? null : garageId);
+  }, []);
 
   const handleSuspendGarage = async (garage, e) => {
     e.stopPropagation();
@@ -186,8 +283,8 @@ const GarageManagementPage = () => {
           type="text"
           placeholder="Search by garage name"
           className="w-full sm:w-[520px] px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={handleSearchChange}
           onKeyPress={handleKeyPress}
         />
         <button 
@@ -243,73 +340,17 @@ const GarageManagementPage = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {garages.map((garage) => (
-                <tr key={garage.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/garages/${garage.id}`)}>
-                  <td className="px-5 py-4 text-sm font-medium text-gray-900">{garage.name}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{garage.owner}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{garage.contact}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{garage.area}</td>
-                  <td className="px-5 py-4 text-sm">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      garage.isSuspended ? 'bg-red-100 text-red-700' :
-                      garage.isDeleted ? 'bg-gray-100 text-gray-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
-                      {garage.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{garage.rating} ★</td>
-                  <td className="px-5 py-4 text-right text-sm font-medium relative" ref={openMenu === garage.id ? menuRef : null}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        
-                        // Calculate if menu should open upwards or downwards
-                        const buttonRect = e.currentTarget.getBoundingClientRect();
-                        const viewportHeight = window.innerHeight;
-                        const spaceBelow = viewportHeight - buttonRect.bottom;
-                        const menuHeight = 120; // Approximate menu height
-                        
-                        // If not enough space below, open upwards
-                        if (spaceBelow < menuHeight && buttonRect.top > menuHeight) {
-                          setMenuPosition('top');
-                        } else {
-                          setMenuPosition('bottom');
-                        }
-                        
-                        setOpenMenu(m => m === garage.id ? null : garage.id);
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
-                    {openMenu === garage.id && (
-                      <div className={`origin-top-right absolute right-0 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 ${
-                        menuPosition === 'top' ? 'bottom-full mb-2' : 'mt-2'
-                      }`}>
-                        <div className="py-1 text-sm">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setOpenMenu(null); navigate(`/garages/${garage.id}`); }}
-                            className="block w-full text-left px-3 py-2 hover:bg-gray-50"
-                          >View Details</button>
-                          {!garage.isDeleted && (
-                            <button
-                              onClick={(e) => handleSuspendGarage(garage, e)}
-                              className="block w-full text-left px-3 py-2 hover:bg-gray-50"
-                            >
-                              {garage.isSuspended ? 'Unsuspend Garage' : 'Suspend Garage'}
-                            </button>
-                          )}
-                          {!garage.isDeleted && (
-                            <button
-                              onClick={(e) => handleDeleteGarage(garage, e)}
-                              className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
-                            >Delete Garage</button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                </tr>
+                <GarageRow 
+                  key={garage.id} 
+                  garage={garage} 
+                  openMenu={openMenu}
+                  menuRef={menuRef}
+                  menuPosition={menuPosition}
+                  onNavigate={handleNavigate}
+                  onMenuClick={handleMenuClick}
+                  onSuspend={handleSuspendGarage}
+                  onDelete={handleDeleteGarage}
+                />
               ))}
             </tbody>
           </table>
