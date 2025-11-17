@@ -1,5 +1,6 @@
 import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '../config/supabase';
 import cache from '../utils/cache';
+import { retryApiCall } from '../utils/retry';
 
 // API Base URL - Admin uses Supabase Functions
 const API_BASE_URL = process.env.REACT_APP_FUNCTIONS_URL || FUNCTIONS_URL;
@@ -119,23 +120,31 @@ export const apiService = {
     const cached = cache.get(endpoint);
     if (cached) return cached;
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    
-    const result = await response.json();
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to fetch users');
-    }
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+        throw new Error(result.message || `Failed to fetch users (${response.status})`);
+      }
+      
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch users');
+      }
+      
+      // Cache the result
+      cache.set(endpoint, {}, result);
+      
+      return result;
+    }, `GET ${endpoint}`);
   },
 
   getUserDetail: async (userId) => {
@@ -211,23 +220,31 @@ export const apiService = {
     const cached = cache.get(endpoint);
     if (cached) return cached;
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    
-    const result = await response.json();
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to fetch garages');
-    }
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+        throw new Error(result.message || `Failed to fetch garages (${response.status})`);
+      }
+      
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch garages');
+      }
+      
+      // Cache the result
+      cache.set(endpoint, {}, result);
+      
+      return result;
+    }, `GET ${endpoint}`);
   },
 
   getGarageDetail: async (garageId) => {
@@ -362,25 +379,28 @@ export const apiService = {
     const cached = cache.get(endpoint);
     if (cached) return cached;
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch orders');
-    }
-    
-    const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || `Failed to fetch orders (${response.status})`);
+      }
+      
+      const result = await response.json();
+      
+      // Cache the result
+      cache.set(endpoint, {}, result);
+      
+      return result;
+    }, `GET ${endpoint}`);
   },
 
   getOrderDetail: async (orderId) => {
@@ -492,25 +512,28 @@ export const apiService = {
     const cached = cache.get(endpoint);
     if (cached) return cached;
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch payments');
-    }
-    
-    const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || `Failed to fetch payments (${response.status})`);
+      }
+      
+      const result = await response.json();
+      
+      // Cache the result
+      cache.set(endpoint, {}, result);
+      
+      return result;
+    }, `GET ${endpoint}`);
   },
 
   getPaymentDetail: async (transactionId) => {
@@ -610,25 +633,28 @@ export const apiService = {
     const cached = cache.get(endpoint);
     if (cached) return cached;
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch disputes');
-    }
-    
-    const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || `Failed to fetch disputes (${response.status})`);
+      }
+      
+      const result = await response.json();
+      
+      // Cache the result
+      cache.set(endpoint, {}, result);
+      
+      return result;
+    }, `GET ${endpoint}`);
   },
 
   getDisputeDetail: async (disputeId) => {
@@ -801,27 +827,30 @@ export const apiService = {
     const cached = cache.get(url);
     if (cached) return cached;
     
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to get support tickets');
-    }
-    
-    const data = await response.json();
-    const result = data.tickets || [];
-    
-    // Cache the result
-    cache.set(url, {}, result);
-    
-    return result;
+    // Wrap in retry logic for resilience against transient errors
+    return retryApiCall(async () => {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(error.error || `Failed to get support tickets (${response.status})`);
+      }
+      
+      const data = await response.json();
+      const result = data.tickets || [];
+      
+      // Cache the result
+      cache.set(url, {}, result);
+      
+      return result;
+    }, `GET ${url}`);
   },
 
   getSupportTicketDetail: async (ticketId) => {
