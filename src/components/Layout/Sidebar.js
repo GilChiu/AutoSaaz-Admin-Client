@@ -100,7 +100,17 @@ const Sidebar = () => {
             src={`${process.env.PUBLIC_URL}/auto-saaz-logo.pdf.png`}
             alt="AutoSaaz Admin" 
             className="dashboard-logo-image"
+            onLoad={(e) => {
+              console.log('✅ Logo loaded successfully!');
+              console.log('Logo src:', e.target.src);
+              console.log('Logo naturalWidth:', e.target.naturalWidth);
+              console.log('Logo naturalHeight:', e.target.naturalHeight);
+            }}
             onError={(e) => {
+              console.error('❌ Logo failed to load!');
+              console.error('Attempted src:', e.target.src);
+              console.error('PUBLIC_URL:', process.env.PUBLIC_URL);
+              console.error('Full path attempted:', `${process.env.PUBLIC_URL}/auto-saaz-logo.pdf.png`);
               e.target.style.display = 'none';
               e.target.nextElementSibling.style.display = 'flex';
             }}
