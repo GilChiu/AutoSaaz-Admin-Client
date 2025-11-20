@@ -1,5 +1,31 @@
-const ANALYTICS_API_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/admin-analytics-stats`;
-const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
+import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '../config/supabase';
+
+/**
+ * Get authentication token from localStorage
+ */
+const getAuthToken = () => {
+  return localStorage.getItem('authToken') || 
+         localStorage.getItem('accessToken') || 
+         localStorage.getItem('token') ||
+         null;
+};
+
+/**
+ * Get headers with authentication token
+ */
+const getHeaders = () => {
+  const token = getAuthToken();
+  const headers = {
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['x-admin-token'] = token;
+  }
+  
+  return headers;
+};
 
 /**
  * Analytics statistics service for Admin Dashboard
@@ -12,30 +38,31 @@ class AnalyticsService {
    */
   async getAnalyticsStats() {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = getAuthToken();
       
       if (!token) {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch(ANALYTICS_API_URL, {
+      console.log('Fetching analytics stats from:', `${FUNCTIONS_URL}/admin-analytics-stats`);
+
+      const response = await fetch(`${FUNCTIONS_URL}/admin-analytics-stats`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'x-admin-token': token,
-        },
+        headers: getHeaders(),
       });
 
+      console.log('Analytics API response status:', response.status);
+
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Analytics API error response:', errorData);
+        
         if (response.status === 401) {
-          // Token expired or invalid
           localStorage.removeItem('authToken');
           window.location.href = '/login';
           throw new Error('Session expired. Please login again.');
         }
         
-        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Failed to fetch analytics stats: ${response.status}`);
       }
 

@@ -1,13 +1,48 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import debounce from '../utils/debounce';
+
+// Memoized UserRow component to prevent unnecessary re-renders
+const UserRow = React.memo(({ user, onNavigate }) => (
+  <tr key={user.id} className="hover:bg-gray-50">
+    <td className="px-5 py-4 text-sm text-gray-900 font-medium">{user.name || 'N/A'}</td>
+    <td className="px-5 py-4 text-sm text-gray-700">{user.phone || 'N/A'}</td>
+    <td className="px-5 py-4 text-sm text-gray-700 max-w-[140px] truncate" title={user.email}>{user.email}</td>
+    <td className="px-5 py-4 text-sm text-gray-700">{user.carModel || 'N/A'}</td>
+    <td className="px-5 py-4 text-sm text-gray-700">{user.bookings || 0}</td>
+    <td className="px-5 py-4 text-sm flex items-center gap-1">
+      {user.verification === 'Validated' ? (
+        <>
+          <span className="text-green-600">Validated</span>
+          <CheckCircle className="h-4 w-4 text-green-600" />
+        </>
+      ) : (
+        <>
+          <span className="text-red-600">Unvalidated</span>
+          <XCircle className="h-4 w-4 text-red-600" />
+        </>
+      )}
+    </td>
+    <td className="px-5 py-4 text-sm text-gray-700">{user.totalSale || '0 AED'}</td>
+    <td className="px-5 py-4 text-right">
+      <button
+        onClick={() => onNavigate(user.id)}
+        className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-2 rounded-md shadow"
+      >View Details</button>
+    </td>
+  </tr>
+));
+
+UserRow.displayName = 'UserRow';
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -41,9 +76,24 @@ const UserManagementPage = () => {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Debounced search to reduce API calls
+  const debouncedSearch = useMemo(
+    () => debounce((value) => {
+      setSearch(value);
+      setPage(1);
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
   const handleSearch = () => {
-    setPage(1); // Reset to first page on search
-    fetchUsers();
+    setSearch(searchInput);
+    setPage(1);
   };
 
   const handleKeyPress = (e) => {
@@ -51,6 +101,11 @@ const UserManagementPage = () => {
       handleSearch();
     }
   };
+
+  // Memoized navigation handler
+  const handleNavigate = useCallback((userId) => {
+    navigate(`/users/${userId}`);
+  }, [navigate]);
 
   return (
     <div className="space-y-6">
@@ -60,8 +115,8 @@ const UserManagementPage = () => {
             type="text"
             placeholder="Search by name, phone, email..."
             className="w-full sm:w-96 px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={handleSearchChange}
             onKeyPress={handleKeyPress}
           />
           <button
@@ -122,33 +177,7 @@ const UserManagementPage = () => {
               </tr>
             ) : (
               users.map(user => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-4 text-sm text-gray-900 font-medium">{user.name || 'N/A'}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{user.phone || 'N/A'}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700 max-w-[140px] truncate" title={user.email}>{user.email}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{user.carModel || 'N/A'}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{user.bookings || 0}</td>
-                  <td className="px-5 py-4 text-sm flex items-center gap-1">
-                    {user.verification === 'Validated' ? (
-                      <>
-                        <span className="text-green-600">Validated</span>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-red-600">Unvalidated</span>
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      </>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{user.totalSale || '0 AED'}</td>
-                  <td className="px-5 py-4 text-right">
-                    <button
-                      onClick={() => navigate(`/users/${user.id}`)}
-                      className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-2 rounded-md shadow"
-                    >View Details</button>
-                  </td>
-                </tr>
+                <UserRow key={user.id} user={user} onNavigate={handleNavigate} />
               ))
             )}
           </tbody>

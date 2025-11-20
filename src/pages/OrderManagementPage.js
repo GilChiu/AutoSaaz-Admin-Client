@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import debounce from '../utils/debounce';
+import { formatDateTime } from '../utils/dateFormatter';
 
 const StatusBadge = ({ status }) => {
   const cls = status === 'pending' ? 'bg-yellow-100 text-yellow-700' : status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
@@ -8,7 +10,25 @@ const StatusBadge = ({ status }) => {
   return <span className={`px-3 py-1 rounded-full text-xs font-medium ${cls}`}>{label}</span>;
 };
 
-const OrderCard = ({ order, onAssign, onComplete }) => (
+// Memoized OrderCard component
+const OrderCard = React.memo(({ order, onAssign, onComplete }) => {
+  // Determine which timestamp to show based on status
+  const getStatusTimestamp = () => {
+    if (order.status === 'completed' && order.completedAt) {
+      return { label: 'Completed', time: formatDateTime(order.completedAt) };
+    }
+    if (order.status === 'in_progress' && order.assignedAt) {
+      return { label: 'Assigned', time: formatDateTime(order.assignedAt) };
+    }
+    if (order.createdAt) {
+      return { label: 'Created', time: formatDateTime(order.createdAt) };
+    }
+    return { label: 'Status', time: 'N/A' };
+  };
+  
+  const statusTimestamp = getStatusTimestamp();
+  
+  return (
   <div className="bg-white border border-gray-200 rounded-lg p-5">
     <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
       <div>
@@ -37,9 +57,15 @@ const OrderCard = ({ order, onAssign, onComplete }) => (
       </div>
     </div>
     <div className="mt-4 flex items-center justify-between">
-      <div className="text-xs text-gray-600">
-        <div className="font-medium">Payment Status</div>
-        <div>{formatPaymentStatus(order.paymentStatus)}</div>
+      <div className="flex gap-6">
+        <div className="text-xs text-gray-600">
+          <div className="font-medium">Payment Status</div>
+          <div>{formatPaymentStatus(order.paymentStatus)}</div>
+        </div>
+        <div className="text-xs text-gray-600">
+          <div className="font-medium">{statusTimestamp.label} At</div>
+          <div className="text-gray-800">{statusTimestamp.time}</div>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <StatusBadge status={order.status} />
@@ -64,6 +90,9 @@ const OrderCard = ({ order, onAssign, onComplete }) => (
     </div>
   </div>
 );
+});
+
+OrderCard.displayName = 'OrderCard';
 
 const formatRecoveryStatus = (status) => {
   const map = {
@@ -208,6 +237,21 @@ const OrderManagementPage = () => {
   // Reset page when filters change
   useEffect(() => { setPage(1); }, [currentStatus, search]);
 
+  // Debounced search
+  const debouncedSearch = useMemo(
+    () => debounce((value) => {
+      setSearch(value);
+      setPage(1);
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
+
   const handleSearch = () => {
     setSearch(searchInput);
     setPage(1);
@@ -219,13 +263,18 @@ const OrderManagementPage = () => {
     }
   };
 
-  const openAssign = (order) => { 
+  const openAssign = useCallback((order) => { 
     setActiveOrder(order); 
     setSelectedGarage(order.garageId);
     setAssignOpen(true); 
-  };
+  }, []);
 
-  const handleAssignGarage = async () => {
+  const handleCompleteOrder = useCallback((order) => {
+    setActiveOrder(order);
+    setConfirmOpen(true);
+  }, []);
+
+  const handleAssignGarage = useCallback(async () => {
     if (!selectedGarage || !activeOrder) return;
     
     try {
@@ -244,14 +293,9 @@ const OrderManagementPage = () => {
     } finally {
       setAssigning(false);
     }
-  };
+  }, [activeOrder, selectedGarage, fetchOrders]);
 
-  const handleCompleteOrder = (order) => {
-    setActiveOrder(order);
-    setConfirmOpen(true);
-  };
-
-  const confirmCompleteOrder = async () => {
+  const confirmCompleteOrder = useCallback(async () => {
     if (!activeOrder) return;
     
     try {
@@ -270,7 +314,7 @@ const OrderManagementPage = () => {
     } finally {
       setCompleting(false);
     }
-  };
+  }, [activeOrder, fetchOrders]);
 
   return (
     <div className="space-y-6">
@@ -283,7 +327,7 @@ const OrderManagementPage = () => {
           placeholder="Search by User & Garage name"
           className="w-full sm:w-[420px] px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={handleSearchChange}
           onKeyPress={handleSearchKeyPress}
         />
         <button 

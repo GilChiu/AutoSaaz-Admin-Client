@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Users, Building, Calendar, DollarSign, TrendingUp, Clock } from "lucide-react";
 import DirhamIcon from "../components/DirhamIcon";
-import dashboardStatsService from "../services/dashboardStats.service";
+import { apiService } from "../services/apiService";
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({
@@ -18,15 +18,11 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadDashboardStats();
-  }, []);
-
-  const loadDashboardStats = async () => {
+  const loadDashboardStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dashboardStatsService.getDashboardStats();
+      const data = await apiService.getDashboardStats();
       
       console.log('Dashboard API Response:', data);
 
@@ -61,10 +57,14 @@ const DashboardPage = () => {
       setError(err.message || 'Failed to load dashboard statistics');
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDashboardStats();
+  }, [loadDashboardStats]);
 
   // Format numbers for display, without embedding currency so we can prepend a custom AED symbol icon.
-  const formatAED = (value) => {
+  const formatAED = useCallback((value) => {
     try {
       return new Intl.NumberFormat('en-AE', {
         style: 'decimal',
@@ -75,9 +75,9 @@ const DashboardPage = () => {
       // Fallback to a simple prefix if Intl locale isn't available
       return Number(value || 0).toLocaleString('en');
     }
-  };
+  }, []);
 
-  const StatsCard = ({ title, value, icon: Icon, change, changeType }) => (
+  const StatsCard = React.memo(({ title, value, icon: Icon, change, changeType }) => (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex items-center">
         <div className="flex-shrink-0">
@@ -99,9 +99,9 @@ const DashboardPage = () => {
         )}
       </div>
     </div>
-  );
+  ));
 
-  const getStatusColor = (status) => {
+  const getStatusColor = useCallback((status) => {
     switch (status) {
       case 'completed':
         return 'text-green-600 bg-green-100';
@@ -112,7 +112,33 @@ const DashboardPage = () => {
       default:
         return 'text-gray-600 bg-gray-100';
     }
-  };
+  }, []);
+
+  // Memoized OrderRow component to prevent unnecessary re-renders
+  const OrderRow = React.memo(({ order, formatAED, getStatusColor }) => (
+    <tr key={order.id}>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {order.customer}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {order.garage}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        {order.service}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        <span className="inline-flex items-center gap-1">
+          <DirhamIcon />
+          {formatAED(order.amount)}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
+          {order.status}
+        </span>
+      </td>
+    </tr>
+  ));
 
   return (
     <div className="space-y-6">
@@ -238,28 +264,12 @@ const DashboardPage = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {recentOrders.map((order) => (
-                        <tr key={order.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {order.customer}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {order.garage}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {order.service}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <span className="inline-flex items-center gap-1">
-                              <DirhamIcon />
-                              {formatAED(order.amount)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                        </tr>
+                        <OrderRow 
+                          key={order.id} 
+                          order={order} 
+                          formatAED={formatAED} 
+                          getStatusColor={getStatusColor} 
+                        />
                       ))}
                     </tbody>
                   </table>

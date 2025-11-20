@@ -62,11 +62,11 @@ const GarageDetailPage = () => {
         type: 'warning',
         showInput: false,
         onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
           try {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const adminId = userData.id;
             await apiService.unsuspendGarage(garage.id, adminId);
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
             fetchGarageDetail();
           } catch (err) {
             console.error('Error unsuspending garage:', err);
@@ -89,15 +89,15 @@ const GarageDetailPage = () => {
         message: `Are you sure you want to suspend ${garage.name}?`,
         type: 'danger',
         showInput: true,
-        inputPlaceholder: 'Enter suspension reason',
+        inputPlaceholder: 'Reason for suspension (optional)',
         inputValue: '',
         onConfirm: async () => {
+          const reason = confirmModal.inputValue || 'Suspended by admin';
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
           try {
             const userData = JSON.parse(localStorage.getItem('userData') || '{}');
             const adminId = userData.id;
-            const reason = confirmModal.inputValue || 'Suspended by admin';
             await apiService.suspendGarage(garage.id, reason, adminId);
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
             fetchGarageDetail();
           } catch (err) {
             console.error('Error suspending garage:', err);
@@ -126,11 +126,11 @@ const GarageDetailPage = () => {
       type: 'danger',
       showInput: false,
       onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
           const userData = JSON.parse(localStorage.getItem('userData') || '{}');
           const adminId = userData.id;
           await apiService.deleteGarage(garage.id, adminId);
-          setConfirmModal(prev => ({ ...prev, isOpen: false }));
           navigate('/garages');
         } catch (err) {
           console.error('Error deleting garage:', err);
