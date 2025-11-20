@@ -13,6 +13,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import "./sidebar.css";
 
+// AutoSaaz Admin Sidebar Component - Updated with logo support
+
 const Sidebar = () => {
   const { logout } = useAuth();
   const location = useLocation();
