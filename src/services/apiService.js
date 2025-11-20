@@ -396,6 +396,17 @@ export const apiService = {
       
       const result = await response.json();
       
+      // Transform snake_case to camelCase for timestamps
+      if (result.orders && Array.isArray(result.orders)) {
+        result.orders = result.orders.map(order => ({
+          ...order,
+          assignedAt: order.assigned_at || order.assignedAt,
+          completedAt: order.completed_at || order.completedAt,
+          createdAt: order.created_at || order.createdAt,
+          updatedAt: order.updated_at || order.updatedAt
+        }));
+      }
+      
       // Cache the result
       cache.set(endpoint, {}, result);
       
