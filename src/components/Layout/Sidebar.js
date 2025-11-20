@@ -96,7 +96,16 @@ const Sidebar = () => {
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
         <div className="dashboard-logo">
-          <div className="dashboard-logo-icon">AS</div>
+          <img 
+            src={`${process.env.PUBLIC_URL}/autoSaaz-logo.png`}
+            alt="AutoSaaz Admin" 
+            className="dashboard-logo-image"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextElementSibling.style.display = 'flex';
+            }}
+          />
+          <div className="dashboard-logo-icon" style={{ display: 'none' }}>AS</div>
           <div className="dashboard-logo-text">
             <span className="dashboard-logo-name">AutoSaaz</span>
             <span className="dashboard-logo-subtitle">Admin</span>
