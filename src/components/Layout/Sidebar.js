@@ -99,7 +99,7 @@ const Sidebar = () => {
       <div className="dashboard-sidebar-header">
         <div className="dashboard-logo">
           <img 
-            src={`${process.env.PUBLIC_URL}/logo.png`}
+            src={`${process.env.PUBLIC_URL}/autoSaaz-logo.png`}
             alt="AutoSaaz Admin" 
             className="dashboard-logo-image"
             onLoad={(e) => {
