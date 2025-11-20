@@ -3,17 +3,17 @@
   "name": "AutoSaaz Admin - Manage your auto service platform",
   "icons": [
     {
-      "src": "autoSaaz-logo.png",
+      "src": "auto-saaz-logo.pdf.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "autoSaaz-logo.png",
+      "src": "auto-saaz-logo.pdf.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "autoSaaz-logo.png",
+      "src": "auto-saaz-logo.pdf.png",
       "type": "image/png",
       "sizes": "512x512"
     }

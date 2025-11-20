@@ -97,7 +97,7 @@ const Sidebar = () => {
       <div className="dashboard-sidebar-header">
         <div className="dashboard-logo">
           <img 
-            src={`${process.env.PUBLIC_URL}/autoSaaz-logo.png`}
+            src={`${process.env.PUBLIC_URL}/auto-saaz-logo.pdf.png`}
             alt="AutoSaaz Admin" 
             className="dashboard-logo-image"
             onError={(e) => {
