@@ -95,35 +95,36 @@ const Sidebar = () => {
   };
 
   // Debug logging for logo loading
+  const logoPath = '/autoSaaz-logo.png';
   console.log('🔍 Sidebar Component Mounted');
   console.log('🔍 PUBLIC_URL:', process.env.PUBLIC_URL);
-  console.log('🔍 Logo path will be:', `${process.env.PUBLIC_URL}/autoSaaz-logo.png`);
+  console.log('🔍 Logo path (direct):', logoPath);
   console.log('🔍 Base URL:', window.location.origin);
+  console.log('🔍 Full logo URL:', `${window.location.origin}${logoPath}`);
 
   return (
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
         <div className="dashboard-logo">
           <img 
-            src={`${process.env.PUBLIC_URL}/autoSaaz-logo.png`}
+            src="/autoSaaz-logo.png"
             alt="AutoSaaz Admin" 
             className="dashboard-logo-image"
             onLoad={(e) => {
               console.log('✅ Logo loaded successfully!');
               console.log('✅ Final src:', e.target.src);
               console.log('✅ Image dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
-              console.log('✅ Image complete:', e.target.complete);
             }}
             onError={(e) => {
               console.error('❌ Logo failed to load!');
               console.error('❌ Attempted src:', e.target.src);
-              console.error('❌ PUBLIC_URL value:', process.env.PUBLIC_URL || '(empty string)');
-              console.error('❌ Full constructed path:', `${process.env.PUBLIC_URL}/autoSaaz-logo.png`);
-              console.error('❌ Window origin:', window.location.origin);
-              console.error('❌ Image complete status:', e.target.complete);
+              console.error('❌ Full URL:', `${window.location.origin}/autoSaaz-logo.png`);
               console.error('❌ Trying to fetch manually...');
-              fetch(`${process.env.PUBLIC_URL}/autoSaaz-logo.png`)
-                .then(res => console.error('❌ Fetch status:', res.status, res.statusText))
+              fetch('/autoSaaz-logo.png')
+                .then(res => {
+                  console.error('❌ Fetch status:', res.status, res.statusText);
+                  console.error('❌ Content-Type:', res.headers.get('content-type'));
+                })
                 .catch(err => console.error('❌ Fetch error:', err.message));
               e.target.style.display = 'none';
               e.target.nextElementSibling.style.display = 'flex';
