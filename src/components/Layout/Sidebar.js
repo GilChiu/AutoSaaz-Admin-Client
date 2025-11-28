@@ -13,6 +13,8 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import "./sidebar.css";
 
+// AutoSaaz Admin Sidebar Component - Updated with logo support
+
 const Sidebar = () => {
   const { logout } = useAuth();
   const location = useLocation();
@@ -92,11 +94,43 @@ const Sidebar = () => {
     toggleGroup(groupKey);
   };
 
+  // Debug logging for logo loading
+  const logoPath = '/autoSaaz-logo.png';
+  console.log('🔍 Sidebar Component Mounted');
+  console.log('🔍 PUBLIC_URL:', process.env.PUBLIC_URL);
+  console.log('🔍 Logo path (direct):', logoPath);
+  console.log('🔍 Base URL:', window.location.origin);
+  console.log('🔍 Full logo URL:', `${window.location.origin}${logoPath}`);
+
   return (
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
         <div className="dashboard-logo">
-          <div className="dashboard-logo-icon">AS</div>
+          <img 
+            src="/autoSaaz-logo.png"
+            alt="AutoSaaz Admin" 
+            className="dashboard-logo-image"
+            onLoad={(e) => {
+              console.log('✅ Logo loaded successfully!');
+              console.log('✅ Final src:', e.target.src);
+              console.log('✅ Image dimensions:', e.target.naturalWidth, 'x', e.target.naturalHeight);
+            }}
+            onError={(e) => {
+              console.error('❌ Logo failed to load!');
+              console.error('❌ Attempted src:', e.target.src);
+              console.error('❌ Full URL:', `${window.location.origin}/autoSaaz-logo.png`);
+              console.error('❌ Trying to fetch manually...');
+              fetch('/autoSaaz-logo.png')
+                .then(res => {
+                  console.error('❌ Fetch status:', res.status, res.statusText);
+                  console.error('❌ Content-Type:', res.headers.get('content-type'));
+                })
+                .catch(err => console.error('❌ Fetch error:', err.message));
+              e.target.style.display = 'none';
+              e.target.nextElementSibling.style.display = 'flex';
+            }}
+          />
+          <div className="dashboard-logo-icon" style={{ display: 'none' }}>AS</div>
           <div className="dashboard-logo-text">
             <span className="dashboard-logo-name">AutoSaaz</span>
             <span className="dashboard-logo-subtitle">Admin</span>

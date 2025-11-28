@@ -30,7 +30,7 @@ const OrderCard = React.memo(({ order, onAssign, onComplete }) => {
   
   return (
   <div className="bg-white border border-gray-200 rounded-lg p-5">
-    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
+    <div className={`grid grid-cols-1 ${(order.status === 'completed' || order.status === 'in_progress') ? 'md:grid-cols-7' : 'md:grid-cols-6'} gap-4 items-start`}>
       <div>
         <div className="text-xs uppercase text-gray-500">User</div>
         <div className="text-sm text-gray-800">{order.customerName}</div>
@@ -55,6 +55,22 @@ const OrderCard = React.memo(({ order, onAssign, onComplete }) => {
         <div className="text-xs uppercase text-gray-500">Inspection Report</div>
         <div className="text-sm text-gray-800 truncate" title={order.inspectionReport}>{order.inspectionReport || 'N/A'}</div>
       </div>
+      {order.status === 'in_progress' && (
+        <div>
+          <div className="text-xs uppercase text-gray-500">Assigned At</div>
+          <div className="text-sm text-gray-800 font-medium">
+            {order.assignedAt ? formatDateTime(order.assignedAt) : 'N/A'}
+          </div>
+        </div>
+      )}
+      {order.status === 'completed' && (
+        <div>
+          <div className="text-xs uppercase text-gray-500">Completed At</div>
+          <div className="text-sm text-gray-800 font-medium">
+            {order.completedAt ? formatDateTime(order.completedAt) : 'N/A'}
+          </div>
+        </div>
+      )}
     </div>
     <div className="mt-4 flex items-center justify-between">
       <div className="flex gap-6">
