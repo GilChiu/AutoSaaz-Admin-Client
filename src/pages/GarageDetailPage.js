@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { formatDateGST } from '../utils/gstDateTime';
 import ConfirmModal from '../components/common/ConfirmModal';
 
 const badgeClass = (status) => {
@@ -247,7 +248,7 @@ const GarageDetailPage = () => {
               <dt className="font-medium text-red-600 col-span-1">Suspended:</dt>
               <dd className="col-span-4 text-red-700">
                 {garage.suspensionReason || 'No reason provided'}
-                {garage.suspendedAt && <div className="text-xs text-red-600 mt-1">Since: {new Date(garage.suspendedAt).toLocaleDateString()}</div>}
+                {garage.suspendedAt && <div className="text-xs text-red-600 mt-1">Since: {formatDateGST(garage.suspendedAt)}</div>}
               </dd>
             </div>
           )}

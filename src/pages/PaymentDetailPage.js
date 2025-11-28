@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { formatDateTimeGST } from '../utils/gstDateTime';
 import ConfirmModal from '../components/common/ConfirmModal';
 
 const SummaryRow = ({ label, value }) => (
@@ -105,15 +106,7 @@ const PaymentDetailPage = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTimeGST(dateString);
   };
 
   if (loading) {

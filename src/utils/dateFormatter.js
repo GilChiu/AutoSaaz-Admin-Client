@@ -1,11 +1,16 @@
 /**
- * Date Formatting Utilities
+ * Date Formatting Utilities with GST (Gulf Standard Time) Support
+ * GST is UTC+4 - All times displayed in Gulf Standard Time
+ * 
  * Provides consistent date/time formatting across the application
+ * Uses industry-standard Intl.DateTimeFormat with Asia/Dubai timezone
  */
 
+const GST_TIMEZONE = 'Asia/Dubai'; // GST +4
+
 /**
- * Format timestamp to readable date and time
- * Example: "Nov 3, 2025 - 11:30"
+ * Format timestamp to readable date and time in GST
+ * Example: "Nov 3, 2025, 11:30 AM GST"
  * @param {string} timestamp - ISO timestamp string
  * @returns {string} Formatted date and time
  */
@@ -18,21 +23,17 @@ export const formatDateTime = (timestamp) => {
     // Check if date is valid
     if (isNaN(date.getTime())) return 'Invalid Date';
     
-    // Format date part: "Nov 3, 2025"
-    const datePart = date.toLocaleDateString('en-US', {
+    const formatted = new Intl.DateTimeFormat('en-US', {
+      timeZone: GST_TIMEZONE,
+      year: 'numeric',
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
-    });
-    
-    // Format time part: "11:30"
-    const timePart = date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
-    });
+      hour12: true
+    }).format(date);
     
-    return `${datePart} - ${timePart}`;
+    return `${formatted} GST`;
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'Invalid Date';
@@ -40,7 +41,7 @@ export const formatDateTime = (timestamp) => {
 };
 
 /**
- * Format timestamp to just date (no time)
+ * Format timestamp to just date (no time) in GST
  * Example: "Nov 3, 2025"
  * @param {string} timestamp - ISO timestamp string
  * @returns {string} Formatted date
@@ -53,11 +54,12 @@ export const formatDate = (timestamp) => {
     
     if (isNaN(date.getTime())) return 'Invalid Date';
     
-    return date.toLocaleDateString('en-US', {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: GST_TIMEZONE,
       month: 'short',
       day: 'numeric',
       year: 'numeric'
-    });
+    }).format(date);
   } catch (error) {
     console.error('Error formatting date:', error);
     return 'Invalid Date';
@@ -65,8 +67,8 @@ export const formatDate = (timestamp) => {
 };
 
 /**
- * Format timestamp to just time (no date)
- * Example: "11:30"
+ * Format timestamp to just time (no date) in GST
+ * Example: "11:30 AM GST"
  * @param {string} timestamp - ISO timestamp string
  * @returns {string} Formatted time
  */
@@ -78,11 +80,14 @@ export const formatTime = (timestamp) => {
     
     if (isNaN(date.getTime())) return 'Invalid Time';
     
-    return date.toLocaleTimeString('en-US', {
+    const formatted = new Intl.DateTimeFormat('en-US', {
+      timeZone: GST_TIMEZONE,
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
-    });
+      hour12: true
+    }).format(date);
+    
+    return `${formatted} GST`;
   } catch (error) {
     console.error('Error formatting time:', error);
     return 'Invalid Time';
@@ -90,7 +95,7 @@ export const formatTime = (timestamp) => {
 };
 
 /**
- * Get relative time (e.g., "2 hours ago")
+ * Get relative time (e.g., "2 hours ago") with GST awareness
  * @param {string} timestamp - ISO timestamp string
  * @returns {string} Relative time string
  */
