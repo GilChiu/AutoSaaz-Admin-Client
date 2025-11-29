@@ -21,7 +21,7 @@ const SupportGarageTicketsPage = () => {
       const data = await apiService.getSupportTickets('garage');
       setTickets(data);
     } catch (err) {
-      console.error('Error fetching tickets:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);

@@ -98,17 +98,15 @@ const ContentServiceSettingsPage = () => {
       setLoading(true);
       setError(null);
       const response = await getAllGaragesWithServices();
-      
-      console.log('API Response:', response);
-      
+
       if (response.success && response.data?.garages) {
-        console.log('Garages loaded:', response.data.garages.length);
+
         setGarages(response.data.garages);
       } else {
         throw new Error('Failed to load garages');
       }
     } catch (err) {
-      console.error('Error loading garages:', err);
+
       setError(err.message || 'Failed to load garages');
     } finally {
       setLoading(false);
@@ -164,7 +162,7 @@ const ContentServiceSettingsPage = () => {
         throw new Error(response.message || 'Failed to set commission');
       }
     } catch (err) {
-      console.error('Error setting commission:', err);
+
       alert(err.message || 'Failed to set commission');
     }
   };

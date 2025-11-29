@@ -23,8 +23,6 @@ const DashboardPage = () => {
       setLoading(true);
       setError(null);
       const data = await apiService.getDashboardStats();
-      
-      console.log('Dashboard API Response:', data);
 
       // Map API response to state
       setStats({
@@ -53,7 +51,7 @@ const DashboardPage = () => {
       setRecentOrders(mappedOrders);
       setLoading(false);
     } catch (err) {
-      console.error('Error loading dashboard stats:', err);
+
       setError(err.message || 'Failed to load dashboard statistics');
       setLoading(false);
     }

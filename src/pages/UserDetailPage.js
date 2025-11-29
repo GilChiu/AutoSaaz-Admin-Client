@@ -21,12 +21,62 @@ const UserDetailPage = () => {
       const data = await apiService.getUserDetail(id);
       setUser(data);
     } catch (err) {
-      console.error('Error fetching user detail:', err);
       setError(err.message || 'Failed to load user details');
     } finally {
       setLoading(false);
     }
   }, [id]);
+
+  const handleSuspend = async () => {
+    if (!window.confirm(`Are you sure you want to suspend ${user.name}?`)) {
+      return;
+    }
+
+    const reason = window.prompt('Enter suspension reason (optional):');
+    
+    try {
+      setOpen(false);
+      setLoading(true);
+      setError('');
+      
+      const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = adminData.id;
+      
+      await apiService.suspendUser(id, reason || 'Suspended by admin', adminId);
+      await fetchUserDetail(); // Refresh user data
+      alert('User suspended successfully');
+    } catch (err) {
+      setError(err.message || 'Failed to suspend user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Are you sure you want to DELETE ${user.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    if (!window.confirm('This will permanently delete the user account. Are you absolutely sure?')) {
+      return;
+    }
+    
+    try {
+      setOpen(false);
+      setLoading(true);
+      setError('');
+      
+      const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = adminData.id;
+      
+      await apiService.deleteUserAccount(id, adminId);
+      alert('User deleted successfully');
+      navigate('/users'); // Redirect to users list
+    } catch (err) {
+      setError(err.message || 'Failed to delete user');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUserDetail();
@@ -58,8 +108,20 @@ const UserDetailPage = () => {
             <button onClick={() => setOpen(o => !o)} className="text-gray-400 hover:text-gray-600 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary-500">⋮</button>
             {open && (
               <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg py-1 text-sm z-10">
-                <button className="block w-full text-left px-3 py-2 hover:bg-gray-50">Suspend User</button>
-                <button className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600">Delete User</button>
+                <button 
+                  onClick={handleSuspend}
+                  className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                  disabled={loading}
+                >
+                  {user.status === 'suspended' ? 'Unsuspend User' : 'Suspend User'}
+                </button>
+                <button 
+                  onClick={handleDelete}
+                  className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
+                  disabled={loading}
+                >
+                  Delete User
+                </button>
                 <button onClick={() => { setOpen(false); navigate(-1); }} className="block w-full text-left px-3 py-2 hover:bg-gray-50">Back</button>
               </div>
             )}

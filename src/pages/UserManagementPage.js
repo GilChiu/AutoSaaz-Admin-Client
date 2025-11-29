@@ -64,7 +64,7 @@ const UserManagementPage = () => {
       setTotal(result.meta?.total || 0);
       setTotalPages(result.meta?.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching users:', err);
+
       setError(err.message || 'Failed to load users');
       setUsers([]);
     } finally {

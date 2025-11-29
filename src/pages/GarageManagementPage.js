@@ -103,7 +103,7 @@ const GarageManagementPage = () => {
       setTotal(result.meta?.total || 0);
       setTotalPages(result.meta?.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching garages:', err);
+
       setError(err.message || 'Failed to load garages');
       setGarages([]);
     } finally {
@@ -185,7 +185,7 @@ const GarageManagementPage = () => {
             await apiService.unsuspendGarage(garage.id, adminId);
             fetchGarages();
           } catch (err) {
-            console.error('Error unsuspending garage:', err);
+
             setConfirmModal({
               isOpen: true,
               title: 'Error',
@@ -216,7 +216,7 @@ const GarageManagementPage = () => {
             await apiService.suspendGarage(garage.id, reason, adminId);
             fetchGarages();
           } catch (err) {
-            console.error('Error suspending garage:', err);
+
             setConfirmModal({
               isOpen: true,
               title: 'Error',
@@ -249,7 +249,7 @@ const GarageManagementPage = () => {
           await apiService.deleteGarage(garage.id, adminId);
           fetchGarages();
         } catch (err) {
-          console.error('Error deleting garage:', err);
+
           setConfirmModal({
             isOpen: true,
             title: 'Error',

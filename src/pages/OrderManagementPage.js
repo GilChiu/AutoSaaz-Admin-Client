@@ -211,19 +211,19 @@ const OrderManagementPage = () => {
     try {
       setLoading(true);
       setError('');
-      console.log('Fetching orders with params:', { page, limit, search, status: currentStatus });
+
       const data = await apiService.getOrders({
         page,
         limit,
         search,
         status: currentStatus
       });
-      console.log('Orders response:', data);
+
       setOrders(data.orders || []);
       setTotal(data.total || 0);
       setTotalPages(data.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching orders:', err);
+
       setError(err.message || 'Failed to load orders');
     } finally {
       setLoading(false);
@@ -236,7 +236,7 @@ const OrderManagementPage = () => {
       const data = await apiService.getActiveGarages();
       setGarages(data.garages || []);
     } catch (err) {
-      console.error('Error fetching garages:', err);
+
     }
   }, []);
 
@@ -304,7 +304,7 @@ const OrderManagementPage = () => {
       setActiveOrder(null);
       fetchOrders(); // Refresh list
     } catch (err) {
-      console.error('Error assigning garage:', err);
+
       alert(err.message || 'Failed to assign garage');
     } finally {
       setAssigning(false);
@@ -325,7 +325,7 @@ const OrderManagementPage = () => {
       setActiveOrder(null);
       fetchOrders(); // Refresh list
     } catch (err) {
-      console.error('Error completing order:', err);
+
       alert(err.message || 'Failed to complete order');
     } finally {
       setCompleting(false);

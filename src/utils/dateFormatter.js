@@ -34,7 +34,7 @@ export const formatDateTime = (timestamp) => {
     
     return `${datePart} - ${timePart}`;
   } catch (error) {
-    console.error('Error formatting date:', error);
+
     return 'Invalid Date';
   }
 };
@@ -59,7 +59,7 @@ export const formatDate = (timestamp) => {
       year: 'numeric'
     });
   } catch (error) {
-    console.error('Error formatting date:', error);
+
     return 'Invalid Date';
   }
 };
@@ -84,7 +84,7 @@ export const formatTime = (timestamp) => {
       hour12: false
     });
   } catch (error) {
-    console.error('Error formatting time:', error);
+
     return 'Invalid Time';
   }
 };
@@ -115,7 +115,7 @@ export const getRelativeTime = (timestamp) => {
     
     return formatDate(timestamp);
   } catch (error) {
-    console.error('Error calculating relative time:', error);
+
     return 'Invalid Date';
   }
 };

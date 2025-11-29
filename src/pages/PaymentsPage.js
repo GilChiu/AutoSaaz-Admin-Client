@@ -21,7 +21,7 @@ const PaymentsPage = () => {
       });
       setTransactions(data.transactions || []);
     } catch (err) {
-      console.error('Error fetching payments:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);

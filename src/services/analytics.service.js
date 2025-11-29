@@ -44,19 +44,14 @@ class AnalyticsService {
         throw new Error('Authentication required');
       }
 
-      console.log('Fetching analytics stats from:', `${FUNCTIONS_URL}/admin-analytics-stats`);
-
       const response = await fetch(`${FUNCTIONS_URL}/admin-analytics-stats`, {
         method: 'GET',
         headers: getHeaders(),
       });
 
-      console.log('Analytics API response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Analytics API error response:', errorData);
-        
+
         if (response.status === 401) {
           localStorage.removeItem('authToken');
           window.location.href = '/login';
@@ -67,11 +62,10 @@ class AnalyticsService {
       }
 
       const data = await response.json();
-      console.log('Analytics stats loaded:', data);
-      
+
       return data;
     } catch (error) {
-      console.error('Error fetching analytics stats:', error);
+
       throw error;
     }
   }

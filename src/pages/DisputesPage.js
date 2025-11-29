@@ -20,7 +20,7 @@ const DisputesPage = () => {
       });
       setDisputes(data.disputes || []);
     } catch (err) {
-      console.error('Error fetching disputes:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);

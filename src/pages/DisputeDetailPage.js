@@ -57,7 +57,7 @@ const DisputeDetailPage = () => {
         }
       } catch (err) {
         // Silent fail for polling - don't show errors
-        console.error('Error polling messages:', err);
+
       }
     }, 5000); // Poll every 5 seconds
 
@@ -72,7 +72,7 @@ const DisputeDetailPage = () => {
       const data = await apiService.getDisputeDetail(id);
       setDisputeData(data);
     } catch (err) {
-      console.error('Error fetching dispute details:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ const DisputeDetailPage = () => {
       setEvidenceMessage('');
       await fetchDisputeDetail();
     } catch (err) {
-      console.error('Error requesting evidence:', err);
+
       alert('Failed to request evidence: ' + err.message);
     } finally {
       setActionLoading(false);
@@ -119,7 +119,7 @@ const DisputeDetailPage = () => {
       setResolveNotes('');
       await fetchDisputeDetail();
     } catch (err) {
-      console.error('Error resolving case:', err);
+
       alert('Failed to resolve case: ' + err.message);
     } finally {
       setActionLoading(false);
@@ -172,7 +172,7 @@ const DisputeDetailPage = () => {
       if (fileInputRef.current) fileInputRef.current.value = '';
       await fetchDisputeDetail();
     } catch (err) {
-      console.error('Error sending message:', err);
+
       alert('Failed to send message: ' + err.message);
     } finally {
       setSendingMessage(false);
@@ -197,7 +197,7 @@ const DisputeDetailPage = () => {
       setEscalateMessage('');
       await fetchDisputeDetail();
     } catch (err) {
-      console.error('Error escalating case:', err);
+
       alert('Failed to escalate case: ' + err.message);
     } finally {
       setActionLoading(false);

@@ -86,7 +86,7 @@ export function getCache(endpoint, params = {}) {
   if (memoryCache.has(key)) {
     const cached = memoryCache.get(key);
     if (Date.now() < cached.expiry) {
-      console.log('[Cache] Memory hit:', endpoint);
+
       return cached.data;
     }
     memoryCache.delete(key);
@@ -99,13 +99,13 @@ export function getCache(endpoint, params = {}) {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Date.now() < parsed.expiry) {
-          console.log('[Cache] localStorage hit:', endpoint);
+
           return parsed.data;
         }
         localStorage.removeItem(key);
       }
     } catch (error) {
-      console.warn('[Cache] localStorage read error:', error);
+
     }
   }
   
@@ -123,22 +123,21 @@ export function setCache(endpoint, params = {}, data) {
   
   // Always set in memory cache
   memoryCache.set(key, cacheData);
-  console.log('[Cache] Memory set:', endpoint, `TTL: ${ttl/1000}s`);
-  
+
   // Set in localStorage if not memory-only
   if (!isMemoryOnly(endpoint)) {
     try {
       localStorage.setItem(key, JSON.stringify(cacheData));
-      console.log('[Cache] localStorage set:', endpoint);
+
     } catch (error) {
-      console.warn('[Cache] localStorage write error:', error);
+
       // If localStorage is full, clear old cache entries
       if (error.name === 'QuotaExceededError') {
         clearOldCache();
         try {
           localStorage.setItem(key, JSON.stringify(cacheData));
         } catch (retryError) {
-          console.error('[Cache] Failed to cache after cleanup:', retryError);
+
         }
       }
     }
@@ -153,9 +152,9 @@ export function invalidateCache(endpoint, params = {}) {
   memoryCache.delete(key);
   try {
     localStorage.removeItem(key);
-    console.log('[Cache] Invalidated:', endpoint);
+
   } catch (error) {
-    console.warn('[Cache] Invalidation error:', error);
+
   }
 }
 
@@ -179,9 +178,9 @@ export function invalidateCacheByPattern(pattern) {
         localStorage.removeItem(key);
       }
     });
-    console.log('[Cache] Invalidated pattern:', pattern);
+
   } catch (error) {
-    console.warn('[Cache] Pattern invalidation error:', error);
+
   }
 }
 
@@ -197,9 +196,9 @@ export function clearCache() {
         localStorage.removeItem(key);
       }
     });
-    console.log('[Cache] All cache cleared');
+
   } catch (error) {
-    console.warn('[Cache] Clear error:', error);
+
   }
 }
 
@@ -232,9 +231,9 @@ function clearOldCache() {
         }
       }
     });
-    console.log('[Cache] Old cache cleared');
+
   } catch (error) {
-    console.warn('[Cache] Old cache clear error:', error);
+
   }
 }
 
@@ -249,7 +248,7 @@ export function getCacheStats() {
     const keys = Object.keys(localStorage);
     localStorageSize = keys.filter(key => key.startsWith(CACHE_CONFIG.PREFIX)).length;
   } catch (error) {
-    console.warn('[Cache] Stats error:', error);
+
   }
   
   return {

@@ -51,7 +51,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
     return data;
   } catch (error) {
-    console.error('API Request Error:', error);
+
     throw error;
   }
 };
@@ -93,7 +93,7 @@ export const apiService = {
         token: result.data.accessToken,
       };
     } catch (error) {
-      console.error('Login error:', error);
+
       throw error;
     }
   },
@@ -201,6 +201,83 @@ export const apiService = {
     // Invalidate users and user detail cache
     cache.invalidatePattern('users');
     cache.invalidate(`/user-detail/${userId}`);
+    return result;
+  },
+
+  suspendUser: async (userId, reason = '', adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        userId,
+        action: 'suspend',
+        reason,
+        adminId
+      }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to suspend user');
+    }
+    
+    // Invalidate users cache
+    cache.invalidatePattern('users');
+    cache.invalidate(`/user-detail/${userId}`);
+    
+    return result;
+  },
+
+  unsuspendUser: async (userId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        userId,
+        action: 'unsuspend',
+        adminId
+      }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to unsuspend user');
+    }
+    
+    // Invalidate users cache
+    cache.invalidatePattern('users');
+    cache.invalidate(`/user-detail/${userId}`);
+    
+    return result;
+  },
+
+  deleteUserAccount: async (userId, adminId = null) => {
+    const response = await fetch(`${API_BASE_URL}/users?userId=${userId}&adminId=${adminId || ''}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Failed to delete user');
+    }
+    
+    // Invalidate users cache
+    cache.invalidatePattern('users');
+    cache.invalidate(`/user-detail/${userId}`);
+    
     return result;
   },
 

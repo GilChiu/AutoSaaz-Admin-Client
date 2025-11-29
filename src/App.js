@@ -37,7 +37,6 @@ const PageLoader = () => (
   </div>
 );
 
-
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   

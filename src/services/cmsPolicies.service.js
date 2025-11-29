@@ -71,7 +71,7 @@ const cmsPoliciesService = {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error fetching policies:', error);
+
       throw error;
     }
   },
@@ -99,7 +99,7 @@ const cmsPoliciesService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching policy:', error);
+
       throw error;
     }
   },
@@ -128,7 +128,7 @@ const cmsPoliciesService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating policy:', error);
+
       throw error;
     }
   },
@@ -157,7 +157,7 @@ const cmsPoliciesService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating policy:', error);
+
       throw error;
     }
   },
@@ -185,7 +185,7 @@ const cmsPoliciesService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error deleting policy:', error);
+
       throw error;
     }
   },

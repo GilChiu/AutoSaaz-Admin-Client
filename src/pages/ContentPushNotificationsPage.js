@@ -36,7 +36,7 @@ const ContentPushNotificationsPage = () => {
       const response = await pushNotificationsService.getNotifications(filters);
       setNotifications(response.data || []);
     } catch (err) {
-      console.error('Failed to load notifications:', err);
+
       setError(err.message || 'Failed to load notifications');
     } finally {
       setLoading(false);
