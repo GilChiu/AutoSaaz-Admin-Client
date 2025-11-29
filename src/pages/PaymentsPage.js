@@ -62,6 +62,18 @@ const PaymentsPage = () => {
     return statusMap[status] || status;
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
@@ -96,19 +108,20 @@ const PaymentsPage = () => {
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Amount</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-6 text-center text-sm text-gray-500">
+                  <td colSpan="8" className="px-5 py-6 text-center text-sm text-gray-500">
                     Loading transactions...
                   </td>
                 </tr>
               ) : transactions.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-6 text-center text-sm text-gray-500">
+                  <td colSpan="8" className="px-5 py-6 text-center text-sm text-gray-500">
                     No transactions found.
                   </td>
                 </tr>
@@ -121,6 +134,7 @@ const PaymentsPage = () => {
                     <td className="px-5 py-3 text-sm text-gray-800">{formatType(t.type)}</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{t.amount?.toLocaleString()} AED</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{formatStatus(t.status)}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{formatDate(t.created_at || t.createdAt)}</td>
                     <td className="px-5 py-3 text-right">
                       <button 
                         onClick={() => navigate(`/payments/${t.id}`)} 

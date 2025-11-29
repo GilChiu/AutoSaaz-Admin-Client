@@ -53,6 +53,18 @@ const DisputesPage = () => {
     return statusMap[status] || status;
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Disputes & Revisions</h1>
@@ -87,19 +99,20 @@ const DisputesPage = () => {
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Type</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Subject</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-6 text-center text-sm text-gray-500">
+                  <td colSpan="8" className="px-5 py-6 text-center text-sm text-gray-500">
                     Loading cases...
                   </td>
                 </tr>
               ) : disputes.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-5 py-6 text-center text-sm text-gray-500">
+                  <td colSpan="8" className="px-5 py-6 text-center text-sm text-gray-500">
                     No cases found.
                   </td>
                 </tr>
@@ -122,6 +135,7 @@ const DisputesPage = () => {
                     <td className="px-5 py-3 text-sm text-gray-800">{formatType(d.type)}</td>
                     <td className="px-5 py-3 text-sm text-gray-800 max-w-[360px] truncate" title={d.subject}>{d.subject}</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{formatStatus(d.status)}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{formatDate(d.created_at || d.createdAt)}</td>
                     <td className="px-5 py-3 text-right">
                       <button onClick={() => navigate(`/disputes/${d.id}`)} className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-1.5 rounded-md">Manage</button>
                     </td>
