@@ -94,9 +94,6 @@ const Sidebar = () => {
     toggleGroup(groupKey);
   };
 
-  // Logo path for admin dashboard
-  const logoPath = '/autoSaaz-logo.png';
-
   return (
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
