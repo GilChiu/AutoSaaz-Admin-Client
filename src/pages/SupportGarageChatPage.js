@@ -15,6 +15,7 @@ const SupportGarageChatPage = () => {
   const [resolving, setResolving] = useState(false);
   const messagesEndRef = useRef(null);
   const lastMessageCountRef = useRef(0);
+  const lastStatusRef = useRef(null);
 
   useEffect(() => {
     fetchTicketDetail();
@@ -34,18 +35,23 @@ const SupportGarageChatPage = () => {
         const updated = await apiService.getSupportTicketDetail(id);
         if (updated && updated.conversation) {
           const newMessageCount = updated.conversation.length;
+          const newStatus = updated.ticket?.status;
           
-          // Update if we have new messages
-          if (newMessageCount > lastMessageCountRef.current) {
+          // Check if there are updates
+          const hasNewMessages = newMessageCount > lastMessageCountRef.current;
+          const statusChanged = newStatus !== lastStatusRef.current;
+          
+          // Update if we have new messages OR status changed
+          if (hasNewMessages || statusChanged) {
             lastMessageCountRef.current = newMessageCount;
+            lastStatusRef.current = newStatus;
             if (isActive) {
               setTicket(updated);
-              // Auto-scroll to new message
-              setTimeout(() => scrollToBottom(), 100);
+              // Auto-scroll only if new messages arrived
+              if (hasNewMessages) {
+                setTimeout(() => scrollToBottom(), 100);
+              }
             }
-          } else if (updated.ticket?.status !== ticket?.ticket?.status) {
-            // Update if status changed even without new messages
-            if (isActive) setTicket(updated);
           }
         }
       } catch (err) {
@@ -74,9 +80,12 @@ const SupportGarageChatPage = () => {
       if (!silent) setLoading(true);
       const data = await apiService.getSupportTicketDetail(id);
       setTicket(data);
-      // Update the ref with current message count
+      // Update the refs with current message count and status
       if (data?.conversation) {
         lastMessageCountRef.current = data.conversation.length;
+      }
+      if (data?.ticket?.status) {
+        lastStatusRef.current = data.ticket.status;
       }
       setError(null);
     } catch (err) {
