@@ -19,11 +19,13 @@ const UserDetailPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const menuRef = useRef(null);
 
-  const fetchUserDetail = useCallback(async () => {
+  const fetchUserDetail = useCallback(async (bypassCache = true) => {
     try {
       setLoading(true);
       setError('');
-      const data = await apiService.getUserDetail(id);
+      console.log('🔍 [UserDetailPage] Fetching user detail, bypassCache:', bypassCache);
+      const data = await apiService.getUserDetail(id, bypassCache);
+      console.log('📥 [UserDetailPage] User data received:', { status: data?.status, name: data?.name });
       setUser(data);
     } catch (err) {
       setError(err.message || 'Failed to load user details');
@@ -47,7 +49,12 @@ const UserDetailPage = () => {
       await apiService.suspendUser(id, reason, adminId);
       
       console.log('✅ [UserDetailPage] Suspend successful, refreshing user data...');
-      await fetchUserDetail(); // Refresh user data
+      
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Force fresh fetch by bypassing cache
+      await fetchUserDetail();
       
       console.log('🔄 [UserDetailPage] User data refreshed, closing modal...');
       setShowSuspendModal(false);

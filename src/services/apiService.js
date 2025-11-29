@@ -147,13 +147,22 @@ export const apiService = {
     }, `GET ${endpoint}`);
   },
 
-  getUserDetail: async (userId) => {
+  getUserDetail: async (userId, bypassCache = false) => {
     const endpoint = `/user-detail/${userId}`;
     
-    // Check cache first
-    const cached = cache.get(endpoint);
-    if (cached) return cached;
+    // Check cache first (unless bypassing)
+    if (!bypassCache) {
+      const cached = cache.get(endpoint);
+      if (cached) {
+        console.log('📦 [API] Returning cached user detail for:', userId);
+        return cached;
+      }
+    } else {
+      console.log('🔄 [API] Bypassing cache for user detail:', userId);
+      cache.invalidate(endpoint);
+    }
     
+    console.log('🌐 [API] Fetching fresh user detail from server:', userId);
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -166,6 +175,8 @@ export const apiService = {
     if (!response.ok || !result.success) {
       throw new Error(result.message || 'Failed to fetch user details');
     }
+    
+    console.log('✅ [API] User detail fetched successfully, status:', result.data?.status);
     
     // Cache the result
     cache.set(endpoint, {}, result.data);
