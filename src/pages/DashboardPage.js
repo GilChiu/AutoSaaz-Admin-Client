@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Users, Building, Calendar, DollarSign, TrendingUp, Clock } from "lucide-react";
 import DirhamIcon from "../components/DirhamIcon";
 import { apiService } from "../services/apiService";
+import { formatDateGST, formatTimeGST } from "../utils/gstDateTime";
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({
@@ -143,7 +144,7 @@ const DashboardPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <div className="text-sm text-gray-500">
-          Last updated: {new Date().toLocaleDateString()}
+          Last updated: {formatDateGST(new Date(), 'short')} at {formatTimeGST(new Date(), false)}
         </div>
       </div>
 
