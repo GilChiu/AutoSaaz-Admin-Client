@@ -58,6 +58,7 @@ const SupportUserChatPage = () => {
       isActive = false;
       clearInterval(pollInterval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]); // Only depend on id, not on ticket state
 
   useEffect(() => {
