@@ -1041,9 +1041,7 @@ export const apiService = {
   getSupportTicketDetail: async (ticketId) => {
     const endpoint = `/support-tickets/${ticketId}`;
     
-    // Check cache first
-    const cached = cache.get(endpoint);
-    if (cached) return cached;
+    // NO CACHE - Always fetch fresh data for real-time messages
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
@@ -1060,9 +1058,6 @@ export const apiService = {
     }
     
     const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
     
     return result;
   },
