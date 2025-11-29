@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import ConfirmationModal from '../components/common/ConfirmationModal';
+import SuspendUserModal from '../components/common/SuspendUserModal';
 
 const badgeClass = (status) => status === 'active' || status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600';
 
@@ -12,6 +14,9 @@ const UserDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const menuRef = useRef(null);
 
   const fetchUserDetail = useCallback(async () => {
@@ -27,54 +32,41 @@ const UserDetailPage = () => {
     }
   }, [id]);
 
-  const handleSuspend = async () => {
-    if (!window.confirm(`Are you sure you want to suspend ${user.name}?`)) {
-      return;
-    }
-
-    const reason = window.prompt('Enter suspension reason (optional):');
-    
+  const handleSuspend = async (reason) => {
     try {
-      setOpen(false);
-      setLoading(true);
+      setActionLoading(true);
       setError('');
       
       const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
       const adminId = adminData.id;
       
-      await apiService.suspendUser(id, reason || 'Suspended by admin', adminId);
+      await apiService.suspendUser(id, reason, adminId);
       await fetchUserDetail(); // Refresh user data
-      alert('User suspended successfully');
+      setShowSuspendModal(false);
+      setOpen(false);
     } catch (err) {
       setError(err.message || 'Failed to suspend user');
+      setShowSuspendModal(false);
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to DELETE ${user.name}? This action cannot be undone.`)) {
-      return;
-    }
-
-    if (!window.confirm('This will permanently delete the user account. Are you absolutely sure?')) {
-      return;
-    }
-    
     try {
-      setOpen(false);
-      setLoading(true);
+      setActionLoading(true);
       setError('');
       
       const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
       const adminId = adminData.id;
       
       await apiService.deleteUserAccount(id, adminId);
-      alert('User deleted successfully');
+      setShowDeleteModal(false);
       navigate('/users'); // Redirect to users list
     } catch (err) {
       setError(err.message || 'Failed to delete user');
-      setLoading(false);
+      setShowDeleteModal(false);
+      setActionLoading(false);
     }
   };
 
@@ -109,20 +101,34 @@ const UserDetailPage = () => {
             {open && (
               <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg py-1 text-sm z-10">
                 <button 
-                  onClick={handleSuspend}
+                  onClick={() => {
+                    setOpen(false);
+                    setShowSuspendModal(true);
+                  }}
                   className="block w-full text-left px-3 py-2 hover:bg-gray-50"
-                  disabled={loading}
+                  disabled={loading || actionLoading}
                 >
                   {user.status === 'suspended' ? 'Unsuspend User' : 'Suspend User'}
                 </button>
                 <button 
-                  onClick={handleDelete}
+                  onClick={() => {
+                    setOpen(false);
+                    setShowDeleteModal(true);
+                  }}
                   className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
-                  disabled={loading}
+                  disabled={loading || actionLoading}
                 >
                   Delete User
                 </button>
-                <button onClick={() => { setOpen(false); navigate(-1); }} className="block w-full text-left px-3 py-2 hover:bg-gray-50">Back</button>
+                <button 
+                  onClick={() => { 
+                    setOpen(false); 
+                    navigate(-1); 
+                  }} 
+                  className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                >
+                  Back
+                </button>
               </div>
             )}
           </div>
@@ -146,6 +152,28 @@ const UserDetailPage = () => {
           </div>
         </dl>
       </div>
+
+      {/* Suspend User Modal */}
+      <SuspendUserModal
+        isOpen={showSuspendModal}
+        onClose={() => setShowSuspendModal(false)}
+        onConfirm={handleSuspend}
+        userName={user.name}
+        isLoading={actionLoading}
+      />
+
+      {/* Delete User Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete User"
+        message={`Are you sure you want to permanently delete ${user.name}? This action cannot be undone and will remove all user data.`}
+        confirmText="Delete User"
+        cancelText="Cancel"
+        type="danger"
+        isDestructive={true}
+      />
     </div>
   );
 };
