@@ -771,9 +771,7 @@ export const apiService = {
   getDisputeDetail: async (disputeId) => {
     const endpoint = `/dispute-detail/${disputeId}`;
     
-    // Check cache first
-    const cached = cache.get(endpoint);
-    if (cached) return cached;
+    // NO CACHE - Always fetch fresh data for real-time messages
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
@@ -789,9 +787,6 @@ export const apiService = {
     }
     
     const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
     
     return result;
   },
@@ -815,10 +810,6 @@ export const apiService = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to request evidence');
     }
-    
-    // Invalidate disputes cache
-    cache.invalidatePattern('disputes');
-    cache.invalidate(`/dispute-detail/${disputeId}`);
     
     return await response.json();
   },
@@ -844,10 +835,6 @@ export const apiService = {
       throw new Error(error.error || 'Failed to resolve case');
     }
     
-    // Invalidate disputes cache
-    cache.invalidatePattern('disputes');
-    cache.invalidate(`/dispute-detail/${disputeId}`);
-    
     return await response.json();
   },
 
@@ -871,10 +858,6 @@ export const apiService = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to escalate case');
     }
-    
-    // Invalidate disputes cache
-    cache.invalidatePattern('disputes');
-    cache.invalidate(`/dispute-detail/${disputeId}`);
     
     return await response.json();
   },
@@ -905,9 +888,6 @@ export const apiService = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to add message');
     }
-    
-    // Invalidate dispute detail cache
-    cache.invalidate(`/dispute-detail/${disputeId}`);
     
     return await response.json();
   },
