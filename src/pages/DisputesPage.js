@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { formatDateTimeGST } from '../utils/gstDateTime';
 
 const DisputesPage = () => {
   const [query, setQuery] = useState('');
@@ -51,18 +52,6 @@ const DisputesPage = () => {
       'closed': 'Closed'
     };
     return statusMap[status] || status;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   return (
@@ -135,7 +124,7 @@ const DisputesPage = () => {
                     <td className="px-5 py-3 text-sm text-gray-800">{formatType(d.type)}</td>
                     <td className="px-5 py-3 text-sm text-gray-800 max-w-[360px] truncate" title={d.subject}>{d.subject}</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{formatStatus(d.status)}</td>
-                    <td className="px-5 py-3 text-sm text-gray-600">{formatDate(d.created_at || d.createdAt)}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{formatDateTimeGST(d.created_at || d.createdAt, false)}</td>
                     <td className="px-5 py-3 text-right">
                       <button onClick={() => navigate(`/disputes/${d.id}`)} className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-1.5 rounded-md">Manage</button>
                     </td>

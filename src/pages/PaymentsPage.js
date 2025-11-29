@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { formatDateTimeGST } from '../utils/gstDateTime';
 
 const PaymentsPage = () => {
   const [query, setQuery] = useState('');
@@ -60,18 +61,6 @@ const PaymentsPage = () => {
       'flagged': 'Flagged'
     };
     return statusMap[status] || status;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   return (
@@ -134,7 +123,7 @@ const PaymentsPage = () => {
                     <td className="px-5 py-3 text-sm text-gray-800">{formatType(t.type)}</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{t.amount?.toLocaleString()} AED</td>
                     <td className="px-5 py-3 text-sm text-gray-800">{formatStatus(t.status)}</td>
-                    <td className="px-5 py-3 text-sm text-gray-600">{formatDate(t.created_at || t.createdAt)}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{formatDateTimeGST(t.created_at || t.createdAt, false)}</td>
                     <td className="px-5 py-3 text-right">
                       <button 
                         onClick={() => navigate(`/payments/${t.id}`)} 
