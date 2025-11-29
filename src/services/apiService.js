@@ -205,6 +205,16 @@ export const apiService = {
   },
 
   suspendUser: async (userId, reason = '', adminId = null) => {
+    console.log('🔧 [API] suspendUser called with:', { userId, reason, adminId, API_BASE_URL });
+    
+    const requestBody = {
+      userId,
+      action: 'suspend',
+      reason,
+      adminId
+    };
+    console.log('📤 [API] Request body:', requestBody);
+    
     const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'PATCH',
       headers: {
@@ -212,18 +222,20 @@ export const apiService = {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({
-        userId,
-        action: 'suspend',
-        reason,
-        adminId
-      }),
+      body: JSON.stringify(requestBody),
     });
     
+    console.log('📥 [API] Response status:', response.status, response.statusText);
+    
     const result = await response.json();
+    console.log('📥 [API] Response data:', result);
+    
     if (!response.ok || !result.success) {
+      console.error('❌ [API] Suspend failed:', result.message);
       throw new Error(result.message || 'Failed to suspend user');
     }
+    
+    console.log('✅ [API] User suspended successfully');
     
     // Invalidate users cache
     cache.invalidatePattern('users');

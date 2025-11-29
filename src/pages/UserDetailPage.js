@@ -33,6 +33,7 @@ const UserDetailPage = () => {
   }, [id]);
 
   const handleSuspend = async (reason) => {
+    console.log('🎯 [UserDetailPage] handleSuspend called with reason:', reason);
     try {
       setActionLoading(true);
       setError('');
@@ -40,15 +41,24 @@ const UserDetailPage = () => {
       const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
       const adminId = adminData.id;
       
+      console.log('👤 [UserDetailPage] Admin data:', { adminId, userId: id });
+      console.log('📞 [UserDetailPage] Calling apiService.suspendUser...');
+      
       await apiService.suspendUser(id, reason, adminId);
+      
+      console.log('✅ [UserDetailPage] Suspend successful, refreshing user data...');
       await fetchUserDetail(); // Refresh user data
+      
+      console.log('🔄 [UserDetailPage] User data refreshed, closing modal...');
       setShowSuspendModal(false);
       setOpen(false);
     } catch (err) {
+      console.error('❌ [UserDetailPage] Suspend error:', err);
       setError(err.message || 'Failed to suspend user');
       setShowSuspendModal(false);
     } finally {
       setActionLoading(false);
+      console.log('🏁 [UserDetailPage] handleSuspend completed');
     }
   };
 

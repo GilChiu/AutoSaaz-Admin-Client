@@ -17,7 +17,9 @@ const SuspendUserModal = ({
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    onConfirm(reason || 'Suspended by admin');
+    const finalReason = reason || 'Suspended by admin';
+    console.log('🚀 [SuspendUserModal] Confirm button clicked, calling onConfirm with reason:', finalReason);
+    onConfirm(finalReason);
   };
 
   const handleClose = () => {
