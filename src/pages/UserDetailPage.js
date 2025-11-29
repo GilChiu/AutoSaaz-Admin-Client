@@ -15,6 +15,7 @@ const UserDetailPage = () => {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [showUnsuspendModal, setShowUnsuspendModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const menuRef = useRef(null);
@@ -69,6 +70,41 @@ const UserDetailPage = () => {
     }
   };
 
+  const handleUnsuspend = async () => {
+    console.log('🎯 [UserDetailPage] handleUnsuspend called');
+    try {
+      setActionLoading(true);
+      setError('');
+      
+      const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = adminData.id;
+      
+      console.log('👤 [UserDetailPage] Admin data:', { adminId, userId: id });
+      console.log('📞 [UserDetailPage] Calling apiService.unsuspendUser...');
+      
+      await apiService.unsuspendUser(id, adminId);
+      
+      console.log('✅ [UserDetailPage] Unsuspend successful, refreshing user data...');
+      
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Force fresh fetch by bypassing cache
+      await fetchUserDetail();
+      
+      console.log('🔄 [UserDetailPage] User data refreshed, closing modal...');
+      setShowUnsuspendModal(false);
+      setOpen(false);
+    } catch (err) {
+      console.error('❌ [UserDetailPage] Unsuspend error:', err);
+      setError(err.message || 'Failed to unsuspend user');
+      setShowUnsuspendModal(false);
+    } finally {
+      setActionLoading(false);
+      console.log('🏁 [UserDetailPage] handleUnsuspend completed');
+    }
+  };
+
   const handleDelete = async () => {
     try {
       setActionLoading(true);
@@ -120,7 +156,11 @@ const UserDetailPage = () => {
                 <button 
                   onClick={() => {
                     setOpen(false);
-                    setShowSuspendModal(true);
+                    if (user.status === 'suspended') {
+                      setShowUnsuspendModal(true);
+                    } else {
+                      setShowSuspendModal(true);
+                    }
                   }}
                   className="block w-full text-left px-3 py-2 hover:bg-gray-50"
                   disabled={loading || actionLoading}
@@ -177,6 +217,19 @@ const UserDetailPage = () => {
         onConfirm={handleSuspend}
         userName={user.name}
         isLoading={actionLoading}
+      />
+
+      {/* Unsuspend User Modal */}
+      <ConfirmationModal
+        isOpen={showUnsuspendModal}
+        onClose={() => setShowUnsuspendModal(false)}
+        onConfirm={handleUnsuspend}
+        title="Unsuspend User"
+        message={`Are you sure you want to unsuspend ${user.name}? This will restore their account access.`}
+        confirmText="Unsuspend User"
+        cancelText="Cancel"
+        type="success"
+        isDestructive={false}
       />
 
       {/* Delete User Modal */}
