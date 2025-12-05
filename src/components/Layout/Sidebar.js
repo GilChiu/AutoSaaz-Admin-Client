@@ -84,6 +84,10 @@ const Sidebar = () => {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
+  const handleLogoClick = () => {
+    navigate('/dashboard/overview');
+  };
+
   const handleGroupHeaderClick = (groupKey, defaultHref, isActiveRoute) => {
     // If not currently active route base, navigate to default first subtab to apply active styling
     if (!isActiveRoute) {
@@ -105,7 +109,12 @@ const Sidebar = () => {
   return (
     <aside className="dashboard-sidebar">
       <div className="dashboard-sidebar-header">
-        <div className="dashboard-logo">
+        <button
+          type="button"
+          className="dashboard-logo"
+          onClick={handleLogoClick}
+          aria-label="Go to dashboard overview"
+        >
           <img 
             src="/autoSaaz-logo.png"
             alt="AutoSaaz Admin" 
@@ -135,7 +144,7 @@ const Sidebar = () => {
             <span className="dashboard-logo-name">AutoSaaz</span>
             <span className="dashboard-logo-subtitle">Admin</span>
           </div>
-        </div>
+        </button>
       </div>
 
       <nav className="dashboard-sidebar-nav">
