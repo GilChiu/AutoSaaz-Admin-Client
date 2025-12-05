@@ -112,19 +112,13 @@ export async function retry(fn, options = {}) {
       if (onRetry) {
         onRetry(attempt + 1, error, delay);
       }
-      
-      console.warn(
-        `[Retry] Attempt ${attempt + 1}/${maxRetries} failed. ` +
-        `Retrying in ${delay}ms...`,
-        error.message
-      );
-      
+
       await sleep(delay);
     }
   }
   
   // All retries exhausted
-  console.error(`[Retry] All ${maxRetries} retries exhausted.`, lastError);
+
   throw lastError;
 }
 

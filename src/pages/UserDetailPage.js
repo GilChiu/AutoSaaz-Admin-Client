@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import ConfirmationModal from '../components/common/ConfirmationModal';
+import SuspendUserModal from '../components/common/SuspendUserModal';
 
 const badgeClass = (status) => status === 'active' || status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600';
 
@@ -12,21 +14,114 @@ const UserDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [showUnsuspendModal, setShowUnsuspendModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const menuRef = useRef(null);
 
-  const fetchUserDetail = useCallback(async () => {
+  const fetchUserDetail = useCallback(async (bypassCache = true) => {
     try {
       setLoading(true);
       setError('');
-      const data = await apiService.getUserDetail(id);
+      console.log('🔍 [UserDetailPage] Fetching user detail, bypassCache:', bypassCache);
+      const data = await apiService.getUserDetail(id, bypassCache);
+      console.log('📥 [UserDetailPage] User data received:', { status: data?.status, name: data?.name });
       setUser(data);
     } catch (err) {
-      console.error('Error fetching user detail:', err);
       setError(err.message || 'Failed to load user details');
     } finally {
       setLoading(false);
     }
   }, [id]);
+
+  const handleSuspend = async (reason) => {
+    console.log('🎯 [UserDetailPage] handleSuspend called with reason:', reason);
+    try {
+      setActionLoading(true);
+      setError('');
+      
+      const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = adminData.id;
+      
+      console.log('👤 [UserDetailPage] Admin data:', { adminId, userId: id });
+      console.log('📞 [UserDetailPage] Calling apiService.suspendUser...');
+      
+      await apiService.suspendUser(id, reason, adminId);
+      
+      console.log('✅ [UserDetailPage] Suspend successful, refreshing user data...');
+      
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Force fresh fetch by bypassing cache
+      await fetchUserDetail();
+      
+      console.log('🔄 [UserDetailPage] User data refreshed, closing modal...');
+      setShowSuspendModal(false);
+      setOpen(false);
+    } catch (err) {
+      console.error('❌ [UserDetailPage] Suspend error:', err);
+      setError(err.message || 'Failed to suspend user');
+      setShowSuspendModal(false);
+    } finally {
+      setActionLoading(false);
+      console.log('🏁 [UserDetailPage] handleSuspend completed');
+    }
+  };
+
+  const handleUnsuspend = async () => {
+    console.log('🎯 [UserDetailPage] handleUnsuspend called');
+    try {
+      setActionLoading(true);
+      setError('');
+      
+      const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = adminData.id;
+      
+      console.log('👤 [UserDetailPage] Admin data:', { adminId, userId: id });
+      console.log('📞 [UserDetailPage] Calling apiService.unsuspendUser...');
+      
+      await apiService.unsuspendUser(id, adminId);
+      
+      console.log('✅ [UserDetailPage] Unsuspend successful, refreshing user data...');
+      
+      // Small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Force fresh fetch by bypassing cache
+      await fetchUserDetail();
+      
+      console.log('🔄 [UserDetailPage] User data refreshed, closing modal...');
+      setShowUnsuspendModal(false);
+      setOpen(false);
+    } catch (err) {
+      console.error('❌ [UserDetailPage] Unsuspend error:', err);
+      setError(err.message || 'Failed to unsuspend user');
+      setShowUnsuspendModal(false);
+    } finally {
+      setActionLoading(false);
+      console.log('🏁 [UserDetailPage] handleUnsuspend completed');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setActionLoading(true);
+      setError('');
+      
+      const adminData = JSON.parse(localStorage.getItem('userData') || '{}');
+      const adminId = adminData.id;
+      
+      await apiService.deleteUserAccount(id, adminId);
+      setShowDeleteModal(false);
+      navigate('/users'); // Redirect to users list
+    } catch (err) {
+      setError(err.message || 'Failed to delete user');
+      setShowDeleteModal(false);
+      setActionLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUserDetail();
@@ -58,9 +153,39 @@ const UserDetailPage = () => {
             <button onClick={() => setOpen(o => !o)} className="text-gray-400 hover:text-gray-600 px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-primary-500">⋮</button>
             {open && (
               <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg py-1 text-sm z-10">
-                <button className="block w-full text-left px-3 py-2 hover:bg-gray-50">Suspend User</button>
-                <button className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600">Delete User</button>
-                <button onClick={() => { setOpen(false); navigate(-1); }} className="block w-full text-left px-3 py-2 hover:bg-gray-50">Back</button>
+                <button 
+                  onClick={() => {
+                    setOpen(false);
+                    if (user.status === 'suspended') {
+                      setShowUnsuspendModal(true);
+                    } else {
+                      setShowSuspendModal(true);
+                    }
+                  }}
+                  className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                  disabled={loading || actionLoading}
+                >
+                  {user.status === 'suspended' ? 'Unsuspend User' : 'Suspend User'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setOpen(false);
+                    setShowDeleteModal(true);
+                  }}
+                  className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600"
+                  disabled={loading || actionLoading}
+                >
+                  Delete User
+                </button>
+                <button 
+                  onClick={() => { 
+                    setOpen(false); 
+                    navigate(-1); 
+                  }} 
+                  className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                >
+                  Back
+                </button>
               </div>
             )}
           </div>
@@ -84,6 +209,41 @@ const UserDetailPage = () => {
           </div>
         </dl>
       </div>
+
+      {/* Suspend User Modal */}
+      <SuspendUserModal
+        isOpen={showSuspendModal}
+        onClose={() => setShowSuspendModal(false)}
+        onConfirm={handleSuspend}
+        userName={user.name}
+        isLoading={actionLoading}
+      />
+
+      {/* Unsuspend User Modal */}
+      <ConfirmationModal
+        isOpen={showUnsuspendModal}
+        onClose={() => setShowUnsuspendModal(false)}
+        onConfirm={handleUnsuspend}
+        title="Unsuspend User"
+        message={`Are you sure you want to unsuspend ${user.name}? This will restore their account access.`}
+        confirmText="Unsuspend User"
+        cancelText="Cancel"
+        type="success"
+        isDestructive={false}
+      />
+
+      {/* Delete User Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete User"
+        message={`Are you sure you want to permanently delete ${user.name}? This action cannot be undone and will remove all user data.`}
+        confirmText="Delete User"
+        cancelText="Cancel"
+        type="danger"
+        isDestructive={true}
+      />
     </div>
   );
 };

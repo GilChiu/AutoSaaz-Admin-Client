@@ -70,7 +70,7 @@ class AdminNotificationsService {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error fetching admin notifications:', error);
+
       throw error;
     }
   }
@@ -91,7 +91,7 @@ class AdminNotificationsService {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+
       throw error;
     }
   }
@@ -114,7 +114,7 @@ class AdminNotificationsService {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+
       throw error;
     }
   }
@@ -136,7 +136,7 @@ class AdminNotificationsService {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+
       throw error;
     }
   }
@@ -160,7 +160,7 @@ class AdminNotificationsService {
         navigate(`/content/push-notification`);
         break;
       default:
-        console.warn('Unknown notification type:', type);
+
     }
   }
 

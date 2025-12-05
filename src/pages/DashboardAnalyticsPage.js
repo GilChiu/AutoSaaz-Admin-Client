@@ -14,7 +14,7 @@ const DashboardAnalyticsPage = () => {
       const data = await apiService.getAnalyticsStats();
       setAnalyticsData(data);
     } catch (err) {
-      console.error('Failed to load analytics:', err);
+
       setError(err.message || 'Failed to load analytics data');
     } finally {
       setLoading(false);

@@ -51,7 +51,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
     return data;
   } catch (error) {
-    console.error('API Request Error:', error);
+
     throw error;
   }
 };
@@ -93,7 +93,7 @@ export const apiService = {
         token: result.data.accessToken,
       };
     } catch (error) {
-      console.error('Login error:', error);
+
       throw error;
     }
   },
@@ -147,13 +147,22 @@ export const apiService = {
     }, `GET ${endpoint}`);
   },
 
-  getUserDetail: async (userId) => {
+  getUserDetail: async (userId, bypassCache = false) => {
     const endpoint = `/user-detail/${userId}`;
     
-    // Check cache first
-    const cached = cache.get(endpoint);
-    if (cached) return cached;
+    // Check cache first (unless bypassing)
+    if (!bypassCache) {
+      const cached = cache.get(endpoint);
+      if (cached) {
+        console.log('📦 [API] Returning cached user detail for:', userId);
+        return cached;
+      }
+    } else {
+      console.log('🔄 [API] Bypassing cache for user detail:', userId);
+      cache.invalidate(endpoint);
+    }
     
+    console.log('🌐 [API] Fetching fresh user detail from server:', userId);
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -166,6 +175,8 @@ export const apiService = {
     if (!response.ok || !result.success) {
       throw new Error(result.message || 'Failed to fetch user details');
     }
+    
+    console.log('✅ [API] User detail fetched successfully, status:', result.data?.status);
     
     // Cache the result
     cache.set(endpoint, {}, result.data);
@@ -205,6 +216,16 @@ export const apiService = {
   },
 
   suspendUser: async (userId, reason = '', adminId = null) => {
+    console.log('🔧 [API] suspendUser called with:', { userId, reason, adminId, API_BASE_URL });
+    
+    const requestBody = {
+      userId,
+      action: 'suspend',
+      reason,
+      adminId
+    };
+    console.log('📤 [API] Request body:', requestBody);
+    
     const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'PATCH',
       headers: {
@@ -212,18 +233,20 @@ export const apiService = {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({
-        userId,
-        action: 'suspend',
-        reason,
-        adminId
-      }),
+      body: JSON.stringify(requestBody),
     });
     
+    console.log('📥 [API] Response status:', response.status, response.statusText);
+    
     const result = await response.json();
+    console.log('📥 [API] Response data:', result);
+    
     if (!response.ok || !result.success) {
+      console.error('❌ [API] Suspend failed:', result.message);
       throw new Error(result.message || 'Failed to suspend user');
     }
+    
+    console.log('✅ [API] User suspended successfully');
     
     // Invalidate users cache
     cache.invalidatePattern('users');
@@ -748,9 +771,7 @@ export const apiService = {
   getDisputeDetail: async (disputeId) => {
     const endpoint = `/dispute-detail/${disputeId}`;
     
-    // Check cache first
-    const cached = cache.get(endpoint);
-    if (cached) return cached;
+    // NO CACHE - Always fetch fresh data for real-time messages
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
@@ -766,9 +787,6 @@ export const apiService = {
     }
     
     const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
     
     return result;
   },
@@ -792,10 +810,6 @@ export const apiService = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to request evidence');
     }
-    
-    // Invalidate disputes cache
-    cache.invalidatePattern('disputes');
-    cache.invalidate(`/dispute-detail/${disputeId}`);
     
     return await response.json();
   },
@@ -821,10 +835,6 @@ export const apiService = {
       throw new Error(error.error || 'Failed to resolve case');
     }
     
-    // Invalidate disputes cache
-    cache.invalidatePattern('disputes');
-    cache.invalidate(`/dispute-detail/${disputeId}`);
-    
     return await response.json();
   },
 
@@ -848,10 +858,6 @@ export const apiService = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to escalate case');
     }
-    
-    // Invalidate disputes cache
-    cache.invalidatePattern('disputes');
-    cache.invalidate(`/dispute-detail/${disputeId}`);
     
     return await response.json();
   },
@@ -882,9 +888,6 @@ export const apiService = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to add message');
     }
-    
-    // Invalidate dispute detail cache
-    cache.invalidate(`/dispute-detail/${disputeId}`);
     
     return await response.json();
   },
@@ -1018,9 +1021,7 @@ export const apiService = {
   getSupportTicketDetail: async (ticketId) => {
     const endpoint = `/support-tickets/${ticketId}`;
     
-    // Check cache first
-    const cached = cache.get(endpoint);
-    if (cached) return cached;
+    // NO CACHE - Always fetch fresh data for real-time messages
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
@@ -1037,9 +1038,6 @@ export const apiService = {
     }
     
     const result = await response.json();
-    
-    // Cache the result
-    cache.set(endpoint, {}, result);
     
     return result;
   },

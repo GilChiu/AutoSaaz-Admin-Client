@@ -70,7 +70,7 @@ const appBannersService = {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error fetching banners:', error);
+
       throw error;
     }
   },
@@ -98,7 +98,7 @@ const appBannersService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching banner:', error);
+
       throw error;
     }
   },
@@ -127,7 +127,7 @@ const appBannersService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating banner:', error);
+
       throw error;
     }
   },
@@ -156,7 +156,7 @@ const appBannersService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating banner:', error);
+
       throw error;
     }
   },
@@ -184,7 +184,7 @@ const appBannersService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error deleting banner:', error);
+
       throw error;
     }
   },

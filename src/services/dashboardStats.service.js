@@ -26,8 +26,6 @@ const getHeaders = () => {
     headers['x-admin-token'] = token;
   }
   
-  console.log('Dashboard request headers:', { hasToken: !!token, tokenPreview: token ? token.substring(0, 20) + '...' : 'none' });
-  
   return headers;
 };
 
@@ -65,12 +63,9 @@ const dashboardStatsService = {
         headers: getHeaders(),
       });
 
-      console.log('Dashboard API response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Dashboard API error response:', errorData);
-        
+
         if (response.status === 401) {
           throw new Error('Authentication failed. Please log out and log in again to refresh your admin token.');
         }
@@ -79,10 +74,10 @@ const dashboardStatsService = {
       }
 
       const data = await response.json();
-      console.log('Dashboard API success response:', data);
+
       return data;
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+
       throw error;
     }
   },

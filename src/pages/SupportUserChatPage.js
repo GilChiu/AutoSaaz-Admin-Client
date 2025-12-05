@@ -20,17 +20,42 @@ const SupportUserChatPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Polling for new messages (realtime doesn't work with custom JWT auth)
   useEffect(() => {
-    // Poll for new messages every 5 seconds
-    const pollInterval = setInterval(() => {
-      if (!loading) {
-        fetchTicketDetail(true);
-      }
-    }, 5000);
+    if (!id) return;
 
-    return () => clearInterval(pollInterval);
+    let isActive = true;
+    let lastMessageCount = ticket?.conversation?.length || 0;
+    
+    // Poll every 3 seconds for responsive updates
+    const pollInterval = setInterval(async () => {
+      if (!isActive) return;
+      try {
+        const updated = await apiService.getSupportTicketDetail(id);
+        if (updated && updated.conversation?.length > lastMessageCount) {
+          lastMessageCount = updated.conversation.length;
+          if (isActive) setTicket(updated);
+          
+          // Auto-scroll to new message
+          setTimeout(() => scrollToBottom(), 100);
+        } else if (updated) {
+          lastMessageCount = updated.conversation?.length || 0;
+          // Update if status changed even without new messages
+          if (updated.ticket?.status !== ticket?.ticket?.status && isActive) {
+            setTicket(updated);
+          }
+        }
+      } catch (err) {
+        // Silent fail for polling
+      }
+    }, 3000);
+
+    return () => {
+      isActive = false;
+      clearInterval(pollInterval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, loading]);
+  }, [id, ticket?.conversation?.length, ticket?.ticket?.status]);
 
   useEffect(() => {
     scrollToBottom();

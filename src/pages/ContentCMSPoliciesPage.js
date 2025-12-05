@@ -36,7 +36,7 @@ const ContentCMSPoliciesPage = () => {
       const response = await cmsPoliciesService.getPolicies(filters);
       setPolicies(response.data || []);
     } catch (err) {
-      console.error('Failed to load policies:', err);
+
       setError(err.message || 'Failed to load policies');
     } finally {
       setLoading(false);

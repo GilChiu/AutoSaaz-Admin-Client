@@ -70,7 +70,7 @@ const pushNotificationsService = {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+
       throw error;
     }
   },
@@ -98,7 +98,7 @@ const pushNotificationsService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching notification:', error);
+
       throw error;
     }
   },
@@ -127,7 +127,7 @@ const pushNotificationsService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating notification:', error);
+
       throw error;
     }
   },
@@ -156,7 +156,7 @@ const pushNotificationsService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating notification:', error);
+
       throw error;
     }
   },
@@ -184,7 +184,7 @@ const pushNotificationsService = {
 
       return await response.json();
     } catch (error) {
-      console.error('Error deleting notification:', error);
+
       throw error;
     }
   },

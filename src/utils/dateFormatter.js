@@ -35,7 +35,7 @@ export const formatDateTime = (timestamp) => {
     
     return `${formatted} GST`;
   } catch (error) {
-    console.error('Error formatting date:', error);
+
     return 'Invalid Date';
   }
 };
@@ -61,7 +61,7 @@ export const formatDate = (timestamp) => {
       year: 'numeric'
     }).format(date);
   } catch (error) {
-    console.error('Error formatting date:', error);
+
     return 'Invalid Date';
   }
 };
@@ -89,7 +89,7 @@ export const formatTime = (timestamp) => {
     
     return `${formatted} GST`;
   } catch (error) {
-    console.error('Error formatting time:', error);
+
     return 'Invalid Time';
   }
 };
@@ -120,7 +120,7 @@ export const getRelativeTime = (timestamp) => {
     
     return formatDate(timestamp);
   } catch (error) {
-    console.error('Error calculating relative time:', error);
+
     return 'Invalid Date';
   }
 };

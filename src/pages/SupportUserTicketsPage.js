@@ -21,7 +21,7 @@ const SupportUserTicketsPage = () => {
       const data = await apiService.getSupportTickets('user');
       setTickets(data);
     } catch (err) {
-      console.error('Error fetching tickets:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);

@@ -30,13 +30,11 @@ const LoginPage = () => {
     setError("");
 
     const result = await login({ email: credentials.email, password: credentials.password });
-    
-    console.log('Login result:', result);
-    
+
     if (result.success) {
       navigate("/dashboard");
     } else {
-      console.error('Login failed:', result.error);
+
       setError(result.error || 'Login failed. Please check your credentials.');
     }
     
@@ -46,7 +44,7 @@ const LoginPage = () => {
   const sendCode = () => {
     if (codeSent) return;
     // Simulate sending 2FA code (disabled for now)
-    console.log('Send code clicked - 2FA disabled');
+
     // setCodeSent(true);
   };
 

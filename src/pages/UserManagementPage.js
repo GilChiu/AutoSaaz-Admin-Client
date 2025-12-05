@@ -5,35 +5,59 @@ import { apiService } from '../services/apiService';
 import debounce from '../utils/debounce';
 
 // Memoized UserRow component to prevent unnecessary re-renders
-const UserRow = React.memo(({ user, onNavigate }) => (
-  <tr key={user.id} className="hover:bg-gray-50">
-    <td className="px-5 py-4 text-sm text-gray-900 font-medium">{user.name || 'N/A'}</td>
-    <td className="px-5 py-4 text-sm text-gray-700">{user.phone || 'N/A'}</td>
-    <td className="px-5 py-4 text-sm text-gray-700 max-w-[140px] truncate" title={user.email}>{user.email}</td>
-    <td className="px-5 py-4 text-sm text-gray-700">{user.carModel || 'N/A'}</td>
-    <td className="px-5 py-4 text-sm text-gray-700">{user.bookings || 0}</td>
-    <td className="px-5 py-4 text-sm flex items-center gap-1">
-      {user.verification === 'Validated' ? (
-        <>
-          <span className="text-green-600">Validated</span>
-          <CheckCircle className="h-4 w-4 text-green-600" />
-        </>
-      ) : (
-        <>
-          <span className="text-red-600">Unvalidated</span>
-          <XCircle className="h-4 w-4 text-red-600" />
-        </>
-      )}
-    </td>
-    <td className="px-5 py-4 text-sm text-gray-700">{user.totalSale || '0 AED'}</td>
-    <td className="px-5 py-4 text-right">
-      <button
-        onClick={() => onNavigate(user.id)}
-        className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-2 rounded-md shadow"
-      >View Details</button>
-    </td>
-  </tr>
-));
+const UserRow = React.memo(({ user, onNavigate }) => {
+  const getStatusBadge = (status) => {
+    const statusLower = (status || 'active').toLowerCase();
+    
+    if (statusLower === 'active') {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full flex items-center gap-1 w-fit">
+          <CheckCircle className="h-3 w-3" />
+          Active
+        </span>
+      );
+    } else if (statusLower === 'suspended') {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full flex items-center gap-1 w-fit">
+          <XCircle className="h-3 w-3" />
+          Suspended
+        </span>
+      );
+    } else if (statusLower === 'deleted') {
+      return (
+        <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full flex items-center gap-1 w-fit">
+          <XCircle className="h-3 w-3" />
+          Deleted
+        </span>
+      );
+    }
+    return (
+      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+        {status}
+      </span>
+    );
+  };
+
+  return (
+    <tr key={user.id} className="hover:bg-gray-50">
+      <td className="px-5 py-4 text-sm text-gray-900 font-medium">{user.name || 'N/A'}</td>
+      <td className="px-5 py-4 text-sm text-gray-700">{user.phone || 'N/A'}</td>
+      <td className="px-5 py-4 text-sm text-gray-700 max-w-[140px] truncate" title={user.email}>{user.email}</td>
+      <td className="px-5 py-4 text-sm text-gray-700">{user.carModel || 'N/A'}</td>
+      <td className="px-5 py-4 text-sm text-gray-700">{user.bookings || 0}</td>
+      <td className="px-5 py-4 text-sm">
+        {getStatusBadge(user.status)}
+      </td>
+      <td className="px-5 py-4 text-sm text-gray-700">{user.totalSale || '0 AED'}</td>
+      <td className="px-5 py-4 text-right">
+        <button
+          onClick={() => onNavigate(user.id)}
+          className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-4 py-2 rounded-md shadow"
+        >View Details</button>
+      </td>
+    </tr>
+  );
+});
 
 UserRow.displayName = 'UserRow';
 
@@ -64,7 +88,7 @@ const UserManagementPage = () => {
       setTotal(result.meta?.total || 0);
       setTotalPages(result.meta?.totalPages || 1);
     } catch (err) {
-      console.error('Error fetching users:', err);
+
       setError(err.message || 'Failed to load users');
       setUsers([]);
     } finally {
@@ -146,7 +170,7 @@ const UserManagementPage = () => {
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Car Model</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Bookings</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Verification</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Total Sale</th>
               <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Actions</th>
             </tr>

@@ -49,7 +49,7 @@ export async function getAllGaragesWithServices() {
 
     return result;
   } catch (error) {
-    console.error('Error fetching garages with services:', error);
+
     throw error;
   }
 }
@@ -79,7 +79,7 @@ export async function setServiceCommission(garageServiceId, commissionPercentage
 
     return result;
   } catch (error) {
-    console.error('Error setting service commission:', error);
+
     throw error;
   }
 }
@@ -106,7 +106,7 @@ export async function bulkSetServiceCommissions(commissions) {
       data: { successful, failed, results },
     };
   } catch (error) {
-    console.error('Error bulk setting commissions:', error);
+
     throw error;
   }
 }

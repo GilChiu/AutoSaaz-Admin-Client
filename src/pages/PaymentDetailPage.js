@@ -34,7 +34,7 @@ const PaymentDetailPage = () => {
       const data = await apiService.getPaymentDetail(id);
       setPaymentData(data);
     } catch (err) {
-      console.error('Error fetching payment details:', err);
+
       setError(err.message);
     } finally {
       setLoading(false);
@@ -51,7 +51,7 @@ const PaymentDetailPage = () => {
       setShowReleaseModal(false);
       await fetchPaymentDetail(); // Refresh data
     } catch (err) {
-      console.error('Error releasing payment:', err);
+
       alert('Failed to release payment: ' + err.message);
     } finally {
       setActionLoading(false);
@@ -74,7 +74,7 @@ const PaymentDetailPage = () => {
       setFlagReason('');
       await fetchPaymentDetail(); // Refresh data
     } catch (err) {
-      console.error('Error flagging payment:', err);
+
       alert('Failed to flag payment: ' + err.message);
     } finally {
       setActionLoading(false);

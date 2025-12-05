@@ -37,7 +37,7 @@ const ContentAppBannersPage = () => {
       const response = await appBannersService.getBanners(filters);
       setBanners(response.data || []);
     } catch (err) {
-      console.error('Failed to load banners:', err);
+
       setError(err.message || 'Failed to load banners');
     } finally {
       setLoading(false);
