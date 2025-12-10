@@ -1,6 +1,6 @@
 import { SUPABASE_ANON_KEY } from '../config/supabase';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://lblcjyeiwgyanadssqac.supabase.co/functions/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://acqdzxnfpnwrhvatfzov.supabase.co/functions/v1';
 
 /**
  * Get authentication token from localStorage
