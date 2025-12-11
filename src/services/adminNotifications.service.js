@@ -147,14 +147,23 @@ class AdminNotificationsService {
    * @param {Function} navigate - React Router navigate function
    */
   navigateToSource(notification, navigate) {
-    const { type } = notification;
+    const { type, metadata = {} } = notification;
 
     switch (type) {
-      case 'ticket':
-        navigate(`/support`);
+      case 'ticket': {
+        const senderType = metadata.sender_type;
+        const ticketId = metadata.ticket_id;
+
+        // Route to the correct tab based on sender type
+        if (senderType === 'garage') {
+          navigate(ticketId ? `/support/garages/${ticketId}` : '/support/garages');
+        } else {
+          navigate(ticketId ? `/support/users/${ticketId}` : '/support/users');
+        }
         break;
+      }
       case 'dispute':
-        navigate(`/disputes`);
+        navigate(`/disputes${metadata.dispute_id ? `/${metadata.dispute_id}` : ''}`);
         break;
       case 'push_notification':
         navigate(`/content/push-notification`);
