@@ -35,6 +35,11 @@ const buildBannerPayload = (bannerData) => {
   payload.start_date = payload.start_date || null;
   payload.end_date = payload.end_date || null;
 
+  // Optional fields: send null when empty
+  payload.image_url = payload.image_url || null;
+  payload.description = payload.description || null;
+  payload.action_url = payload.action_url || null;
+
   // Ensure position is always a number
   if (payload.position === '' || Number.isNaN(Number(payload.position))) {
     payload.position = 0;
