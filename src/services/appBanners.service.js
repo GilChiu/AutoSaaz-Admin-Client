@@ -36,7 +36,8 @@ const buildBannerPayload = (bannerData) => {
   payload.end_date = payload.end_date || null;
 
   // Optional fields: send null when empty
-  payload.image_url = payload.image_url || null;
+  // image_url column is NOT NULL in DB; send empty string when omitted
+  payload.image_url = (payload.image_url || '').trim();
   payload.description = payload.description || null;
   payload.action_url = payload.action_url || null;
 
