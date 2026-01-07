@@ -19,8 +19,6 @@ const ContentPushNotificationsPage = () => {
     message: '',
     target_audience: 'all',
     notification_type: 'general',
-    deep_link: '',
-    image_url: '',
     scheduled_at: '',
     priority: 'normal',
   });
@@ -104,8 +102,6 @@ const ContentPushNotificationsPage = () => {
       message: notification.message,
       target_audience: notification.target_audience,
       notification_type: notification.notification_type,
-      deep_link: notification.deep_link || '',
-      image_url: notification.image_url || '',
       scheduled_at: notification.scheduled_at ? new Date(notification.scheduled_at).toISOString().slice(0, 16) : '',
       priority: notification.priority,
     });
@@ -118,8 +114,6 @@ const ContentPushNotificationsPage = () => {
       message: '',
       target_audience: 'all',
       notification_type: 'general',
-      deep_link: '',
-      image_url: '',
       scheduled_at: '',
       priority: 'normal',
     });
@@ -482,32 +476,6 @@ const ContentPushNotificationsPage = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Deep Link (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.deep_link}
-                    onChange={(e) => setFormData({ ...formData, deep_link: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="/services/ac-repair"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Image URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="https://example.com/image.jpg"
-                  />
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">

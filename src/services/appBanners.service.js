@@ -27,6 +27,28 @@ const getHeaders = () => {
   return headers;
 };
 
+// Normalize optional banner fields before sending to the API
+const buildBannerPayload = (bannerData) => {
+  const payload = { ...bannerData };
+
+  // Convert empty optional strings to null to satisfy Postgres date columns
+  payload.start_date = payload.start_date || null;
+  payload.end_date = payload.end_date || null;
+
+  // Optional fields: send null when empty
+  // image_url column is NOT NULL in DB; send empty string when omitted
+  payload.image_url = (payload.image_url || '').trim();
+  payload.description = payload.description || null;
+  payload.action_url = payload.action_url || null;
+
+  // Ensure position is always a number
+  if (payload.position === '' || Number.isNaN(Number(payload.position))) {
+    payload.position = 0;
+  }
+
+  return payload;
+};
+
 /**
  * App Banners Service
  * Handles all API calls for app banners management
@@ -117,7 +139,7 @@ const appBannersService = {
       const response = await fetch(`${FUNCTIONS_URL}/admin-app-banners`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify(bannerData),
+        body: JSON.stringify(buildBannerPayload(bannerData)),
       });
 
       if (!response.ok) {
@@ -146,7 +168,7 @@ const appBannersService = {
       const response = await fetch(`${FUNCTIONS_URL}/admin-app-banners/${id}`, {
         method: 'PUT',
         headers: getHeaders(),
-        body: JSON.stringify(bannerData),
+        body: JSON.stringify(buildBannerPayload(bannerData)),
       });
 
       if (!response.ok) {
